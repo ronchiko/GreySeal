@@ -25,23 +25,11 @@ void Seal_Transform::transformMatrix(float *matrix) {
     float _rotation[16];
     rotation.toMatrix(_rotation);
 
-    Seal_MatrixMul(matrix, _rotation, matrix);
     Seal_ScaleMatrix(matrix, scale.x, scale.y, scale.z);
+    Seal_MatrixMul(matrix, _rotation, matrix);
     Seal_TranslateMatrix(matrix, position.x, position.y, position.z);
 }
 
-Seal_Object::~Seal_Object() {
-    for(Seal_Object*& child : children) {
-        delete child;
-    }
-}
-
-void Seal_Object::setMesh(int _mesh) {
-    mesh = _mesh;
-}
-void Seal_Object::setMaterial(int m) {
-    material = m;
-}
 void Seal_Camera::generateMatrix() {
     Seal_MatrixPerspective(matrix, FOV, (float) Seal_Specs::width / (float) Seal_Specs::height, Z_NEAR, Z_FAR);
 }
@@ -52,16 +40,19 @@ void Seal_RenderObject(Seal_Object* object, Seal_Scene* scene, float* parent){
 
     // If there is a need for a transform computation, then compute only once
     float transform[16];
-    if((object->mesh >= SEAL_NO_MESH && object->material >= SEAL_NO_MATERIAL) || !object->children.empty()) {
+    if((object->mesh >= SEAL_NO_MESH && object->material >= SEAL_NO_MATERIAL)) {
         object->transform.transformMatrix(transform);
     }
 
+
     // If there is no mesh or is using a corrupted program, don't Seal_Render
     if(object->mesh > SEAL_NO_MESH && object->material > SEAL_NO_MATERIAL){
-
         Seal_Material* material = Seal_GetMaterial(object->material);
         Seal_Mesh* mesh = Seal_GetMesh(object->mesh);
 
+        // Seal_Log("Mesh: %d, L:%d", object->mesh, mesh->size());
+        // Seal_Log("Position: %f, %f, %f", object->transform.position.x, object->transform.position.y, object->transform.position.z);
+        // Seal_Log("Rot: %f, %f, %f", object->transform.rotation.x, object->transform.rotation.y, object->transform.rotation.z);
         glUseProgram(material->program);
 
         // Prepare attributes
@@ -73,7 +64,12 @@ void Seal_RenderObject(Seal_Object* object, Seal_Scene* scene, float* parent){
         glUniformMatrix4fv(material->modelMatrixHandle, 1, GL_FALSE, transform);
         glUniformMatrix4fv(material->projectionMatrixHandle, 1, GL_FALSE, scene->camera.getMatrix());
 
-        glUniform4fv(material->tintHandle, 1, object->color.rgba);
+        float color[4];
+        color[0] = (object->color.rgba >> 24 & 0xFF) * OneOver255;
+        color[1] = (object->color.rgba >> 16 & 0xFF) * OneOver255;
+        color[2] = (object->color.rgba >> 8 & 0xFF) * OneOver255;
+        color[3] = (object->color.rgba & 0xFF) * OneOver255;
+        glUniform4fv(material->tintHandle, 1, color);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, object->texture == SEAL_NO_TEXTURE ? defaultTextureId : object->texture);
@@ -99,7 +95,7 @@ void Seal_RenderObject(Seal_Object* object, Seal_Scene* scene, float* parent){
 }
 
 Seal_Scene::~Seal_Scene() {
-    delete &root;
+    std::free(root);
     delete &camera;
 }
 
@@ -112,42 +108,16 @@ void Seal_Scene::drawScene() {
 
     float parent[16];
     Seal_IdentityMatrix(parent);
-    for(Seal_Object*& object : root)
-        Seal_RenderObject(object, this, parent);
+    for(size_t i = 0; i < objects; i++)
+        if((root[i].object.engineFlags & SEAL_ENGINE_DESTROY) == 0)
+            Seal_RenderObject(&root[i].object, this, parent);
 
     glDisable(GL_DEPTH_TEST);
 }
 
-void Seal_Scene::addObject(Seal_Object *object) {
-    root.push_back(object);
-}
-
-int Seal_Reparent(Seal_Object* child, Seal_Object* parent){
-    // Parent cannot be the child itself, or we are trying to move null
-    if(child == parent || !child) return -1;
-
-    // Erase the child from the old parent
-    std::vector<Seal_Object*>& oldFamily = child->parent->children;
-    oldFamily.erase(std::remove(oldFamily.begin(), oldFamily.end(), child), oldFamily.end());
-
-    //If the child is moved to null, then move it to the scene root
-    /*if(!parent)
-        parent = &Seal_CurrentScene().root;*/
-
-    // Set the child parent to the new parent, and the child to the parent children vector
-    child->parent = parent;
-    parent->children.push_back(child);
-    return 0;
-}
-
-int Seal_Deparent(Seal_Object* child){
-    if(child){
-        // Erase the child from the old parent
-        std::vector<Seal_Object*>& oldFamily = child->parent->children;
-        oldFamily.erase(std::remove(oldFamily.begin(), oldFamily.end(), child), oldFamily.end());
-
-        child->parent = nullptr;
-        return 0;
-    }
-    return -1;
+void Seal_Scene::addObject(Seal_Object **object) {
+    root = (Seal_ObjectUnion*)realloc(root, (objects + 1) * sizeof(Seal_ObjectUnion));
+    root[objects++] = Seal_ObjectUnion(*object);
+    delete *object;
+    *object = (Seal_Object*)&root[objects - 1];
 }

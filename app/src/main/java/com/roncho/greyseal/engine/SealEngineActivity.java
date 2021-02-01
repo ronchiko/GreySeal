@@ -5,24 +5,28 @@ import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.roncho.greyseal.engine.android.GreySealSurfaceView;
-import com.roncho.greyseal.engine.android.GreySealTexturePipeline;
+import com.roncho.greyseal.engine.android.SealSurfaceView;
+import com.roncho.greyseal.engine.android.SealTexturePipeline;
+import com.roncho.greyseal.engine.systems.SealSystemManager;
 
-public class GreySealEngineActivity extends AppCompatActivity {
+public abstract class SealEngineActivity extends AppCompatActivity {
 
     // Used to load the 'native-lib' library on application startup.
     static {
         System.loadLibrary("greyseal-core");
     }
 
-    private GreySealSurfaceView surface;
+    private SealSurfaceView surface;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        surface = new GreySealSurfaceView(getBaseContext());
+        surface = new SealSurfaceView(getBaseContext());
         startEngine(getAssets());
-        GreySealTexturePipeline.init(getAssets());
+        SealTexturePipeline.init(getAssets());
+        SealSystemManager.newManager();
+
+        loadResources();
 
         setContentView(surface);
     }
@@ -44,6 +48,8 @@ public class GreySealEngineActivity extends AppCompatActivity {
         super.finalize();
         stopEngine();
     }
+
+    public abstract void loadResources();
 
     private native static void startEngine(AssetManager manager);
     private native static void stopEngine();

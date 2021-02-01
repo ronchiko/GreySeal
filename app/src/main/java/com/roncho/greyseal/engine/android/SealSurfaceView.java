@@ -4,19 +4,14 @@ import android.content.Context;
 import android.opengl.GLSurfaceView;
 import android.view.MotionEvent;
 
-import javax.microedition.khronos.egl.EGL10;
-import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.egl.EGLContext;
-import javax.microedition.khronos.egl.EGLDisplay;
+public class SealSurfaceView extends GLSurfaceView {
 
-public class GreySealSurfaceView extends GLSurfaceView {
+    private SealRenderer renderer;
 
-    private GreySealRenderer renderer;
-
-    public GreySealSurfaceView(Context context) {
+    public SealSurfaceView(Context context) {
         super(context);
         setEGLContextClientVersion(2);
-        renderer = new GreySealRenderer();
+        renderer = new SealRenderer();
         setRenderer(renderer);
     }
 

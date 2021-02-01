@@ -97,6 +97,6 @@ union Seal_Quaternion {
 
         x = xx * sinA; y = yy * sinA; z = zz * sinA;
         w = cosf(angle * Deg2Rad * 0.5f);
-        normalize();
+        //normalize();
     }
 };

@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.logging.Logger;
 
-public class GreySealTexturePipeline {
+public class SealTexturePipeline {
 
     private static AssetManager assets;
 

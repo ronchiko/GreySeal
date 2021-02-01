@@ -17,7 +17,7 @@ void Seal_NewThreadJNIEnv(JNIEnv* env) { runningEnv = env; }
 int Seal_InitTexturePipeline(JNIEnv* env){
     Seal_NewThreadJNIEnv(env);
 
-    texturePipelineJClass = env->FindClass("com/roncho/greyseal/engine/android/GreySealTexturePipeline");
+    texturePipelineJClass = env->FindClass("com/roncho/greyseal/engine/android/SealTexturePipeline");
     if(env->ExceptionCheck()) return JNI_FALSE;
     textureLoadMethod = env->GetStaticMethodID(texturePipelineJClass, "load", "(Ljava/lang/String;)I");
 
@@ -37,7 +37,7 @@ Seal_Texture Seal_LoadTexture(const Seal_String& path){
 }
 
 extern "C" {
-    JNIEXPORT jint JNICALL Java_com_roncho_greyseal_engine_android_GreySealTexturePipeline_registerBmp(JNIEnv* env, jclass, jbyteArray a, jint width, jint height){
+    JNIEXPORT jint JNICALL Java_com_roncho_greyseal_engine_android_SealTexturePipeline_registerBmp(JNIEnv* env, jclass, jbyteArray a, jint width, jint height){
         union {
             int8_t* array0;
             uint32_t* array1;

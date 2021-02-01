@@ -2,11 +2,8 @@
 
 #include "greyseal/quaternion.h"
 
-union Seal_Vector3 {
-    struct {
-        float x, y, z;
-    };
-    float raw[3];
+struct Seal_Vector3 {
+    float x, y, z;
 
     Seal_Vector3() : x(0), y(0), z(0) {}
     Seal_Vector3(const Seal_Vector3& v) : x(v.x), y(v.y), z(v.z) {}
@@ -31,7 +28,7 @@ union Seal_Vector3 {
         return *this;
     }
     inline Seal_Vector3& operator*=(float f){
-        x *= f; y *= y; z *= z;
+        x *= f; y *= f; z *= f;
         return *this;
     }
 

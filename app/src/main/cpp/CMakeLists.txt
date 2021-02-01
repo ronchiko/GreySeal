@@ -25,12 +25,13 @@ add_library( # Sets the name of the library.
         SHARED
 
         # Provides a relative path to your source file(s).
-        gles/gl_core.cpp
-        gles/mesh.cpp
-        gles/material.cpp
-        gles/texture.cpp
+        seal/gl_core.cpp
+        seal/mesh.cpp
+        seal/material.cpp
+        seal/texture.cpp
         gs_android/gs_assets.cpp
-        gles/scene.cpp
+        seal/scene.cpp
+
         native-lib.cpp )
 
 # Searches for a specified prebuilt library and stores the path as a

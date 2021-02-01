@@ -28,5 +28,5 @@ GLuint Seal_CompileProgram(const Seal_String& vertex, const Seal_String& fragmen
 /**
  * \brief renders the frame
  */
-void Seal_Render();
-Seal_Scene& Seal_CurrentScene(void);
+void Seal_Render(Seal_Byte* updatedData, Seal_Byte* commands);
+Seal_Scene* Seal_CurrentScene(void);
