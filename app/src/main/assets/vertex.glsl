@@ -11,5 +11,5 @@ varying vec3 currentNormal;
 void main() {
     gl_Position = projectionMatrix * modelMatrix * vec4(vertex, 1.0);
     textureUv = uv;
-    currentNormal = normalize((modelMatrix * vec4(normal, 0.0)).xyz);
+    currentNormal = normalize((projectionMatrix * modelMatrix * vec4(normal, 0.0)).xyz);
 }

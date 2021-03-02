@@ -25,9 +25,9 @@ int Seal_LoadTxt(Seal_String path, char** buffer) {
     }
 
     off_t length = AAsset_getLength(asset);
-    *buffer = new char[length];
+    *buffer = new char[length + 1];
     int len = AAsset_read(asset, *buffer, length);
-
+    (*buffer)[length] = '\0';
     AAsset_close(asset);
 
     return len;

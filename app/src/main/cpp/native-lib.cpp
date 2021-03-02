@@ -1,4 +1,3 @@
-#include <jni.h>
 #include <string>
 
 #include "sealog.h"
@@ -9,8 +8,10 @@
 #include "greyseal/vector3.h"
 #include "greyseal/texture.h"
 #include "greyseal/material.h"
+#include "greyseal/preset.h"
+#include "greyseal/calls.h"
 
-#define JNI_FNC(ret) JNIEXPORT ret JNICALL
+#include "jseal.h"
 
 static constexpr int ONE = 1;
 
@@ -22,20 +23,26 @@ extern "C" {
     }
     JNI_FNC(void) Java_com_roncho_greyseal_engine_SealEngineActivity_stopEngine(JNIEnv* env, jclass){
         Seal_FreeMaterials();
+        Seal_EndNttEnvironment();
         Seal_GlEnd();
         Seal_Log("Closed engine");
     }
 
-    JNI_FNC(void) Java_com_roncho_greyseal_engine_android_SealRenderer_init(JNIEnv* env, jclass, jint width, jint height){
+    JNI_FNC(void) Java_com_roncho_greyseal_engine_android_SealRenderer_init(JNIEnv* env, jclass, jint width, jint height, jbyteArray instr){
         Seal_Log("Starting open GL");
         Seal_InitTexturePipeline(env);
+        Seal_SetupNttEnvironment();
         Seal_GlStart(width, height);
+        Seal_Byte* sealCommands = (Seal_Byte*)env->GetByteArrayElements(instr, JNI_FALSE);
+        size_t length = env->GetArrayLength(instr);
+        Seal_ExecuteEngineCalls(sealCommands, length);
         Seal_Log("Open GL started successfully");
     }
     JNI_FNC(void) Java_com_roncho_greyseal_engine_android_SealRenderer_step(JNIEnv* e, jclass, jbyteArray update, jbyteArray commands){
         Seal_Byte* sealUpdate = (Seal_Byte *)e->GetByteArrayElements(update, JNI_FALSE);
         Seal_Byte* sealCommands = (Seal_Byte*)e->GetByteArrayElements(commands, JNI_FALSE);
-        Seal_Render(sealUpdate, sealCommands);
+        size_t commandsLength = e->GetArrayLength(commands);
+        Seal_Render(sealUpdate, sealCommands, commandsLength);
     }
 
     JNI_FNC(void) Java_com_roncho_greyseal_engine_android_SealSurfaceView_sendSealTouchEvent(JNIEnv*, jobject, jfloat x, jfloat y){
@@ -43,7 +50,7 @@ extern "C" {
     }
 
     JNI_FNC(jint) Java_com_roncho_greyseal_engine_systems_stream_SealObjectStream_getSizeofNativeObject(JNIEnv*, jclass){
-        return sizeof(Seal_Object);
+        return sizeof(Seal_Entity);
     }
     JNI_FNC(jint) Java_com_roncho_greyseal_engine_systems_stream_SealEntity_getObjectPayloadSize(JNIEnv*, jclass){
         return 0;   // Currently there is not a feature for individual payloads
@@ -62,5 +69,46 @@ extern "C" {
         jbyte * jArray = (jbyte*)(Seal_CurrentScene()->byteArray());
         e->SetByteArrayRegion(array, 0, bytesSize, jArray);
         return array;
+    }
+
+
+    // TODO: When the engine is done, maybe take look and try to optimize with caching
+    JNI_FNC(void) Java_com_roncho_greyseal_engine_android_cpp_SealLinkedCache_addTexture(JNIEnv* env, jclass cls, jstring str, jint index){
+        jfieldID fid = env->GetStaticFieldID(cls, "textures", "Ljava/util/HashMap;");
+        jobject hashMap = env->GetStaticObjectField(cls, fid);
+        jclass cls_hashMap = env->GetObjectClass(hashMap);
+        jmethodID mid = env->GetMethodID(cls_hashMap, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+
+        jclass cls_Int = env->FindClass("java/lang/Integer");
+        jmethodID mid_IntInit = env->GetMethodID(cls_Int, "<init>", "(I)V");
+        jobject o_index = env->NewObject(cls_Int, mid_IntInit, index);
+
+        env->CallObjectMethod(hashMap, mid, str, o_index);
+    }
+
+    JNI_FNC(void) Java_com_roncho_greyseal_engine_android_cpp_SealLinkedCache_addMesh(JNIEnv* env, jclass cls, jstring str, jint index){
+        jfieldID fid = env->GetStaticFieldID(cls, "meshes", "Ljava/util/HashMap;");
+        jobject hashMap = env->GetStaticObjectField(cls, fid);
+        jclass cls_hashMap = env->GetObjectClass(hashMap);
+        jmethodID mid = env->GetMethodID(cls_hashMap, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+
+        jclass cls_Int = env->FindClass("java/lang/Integer");
+        jmethodID mid_IntInit = env->GetMethodID(cls_Int, "<init>", "(I)V");
+        jobject o_index = env->NewObject(cls_Int, mid_IntInit, index);
+
+        env->CallObjectMethod(hashMap, mid, str, o_index);
+    }
+
+    JNI_FNC(void) Java_com_roncho_greyseal_engine_android_cpp_SealLinkedCache_addMaterial(JNIEnv* env, jclass cls, jstring str, jint index){
+        jfieldID fid = env->GetStaticFieldID(cls, "materials", "Ljava/util/HashMap;");
+        jobject hashMap = env->GetStaticObjectField(cls, fid);
+        jclass cls_hashMap = env->GetObjectClass(hashMap);
+        jmethodID mid = env->GetMethodID(cls_hashMap, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+
+        jclass cls_Int = env->FindClass("java/lang/Integer");
+        jmethodID mid_IntInit = env->GetMethodID(cls_Int, "<init>", "(I)V");
+        jobject o_index = env->NewObject(cls_Int, mid_IntInit, index);
+
+        env->CallObjectMethod(hashMap, mid, str, o_index);
     }
 }

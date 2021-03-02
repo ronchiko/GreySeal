@@ -4,11 +4,11 @@ import com.roncho.greyseal.engine.systems.stream.SealEntity;
 
 public abstract class SealSystem {
 
-    private final static int NEW_FLAG = 1 << 30, DESTROYED_FLAG = 1 << 31, ONLY_USER_FLAGS = 0x0FFFFFFF;
+    private final static short NEW_FLAG = 0x1;
 
     /**
      * Must be implemented for the system to be able to select object to work with
-     * @param entity
+     * @param entity The entity to select
      * @return True if the object should be run by the system
      */
     public abstract boolean selectObject(SealEntity entity);
@@ -24,4 +24,10 @@ public abstract class SealSystem {
      * <b>Override</b>
      */
     public void updateOnce() {}
+
+    /**
+     * Called when the system picks up a new entity
+     * @param entity The new entity
+     */
+    public void onNewEntity(SealEntity entity) {}
 }

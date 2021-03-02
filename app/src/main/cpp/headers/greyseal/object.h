@@ -10,12 +10,12 @@
 #include "color.h"
 
 typedef unsigned int Seal_ObjectFlags;
-typedef uint16_t Seal_EngineFlags;
+typedef Seal_Short Seal_EngineFlags;
 class Seal_Scene;
 
 typedef enum _Seal_EngineFlag_e : Seal_EngineFlags {
     SEAL_ENGINE_DESTROY = 0x1,
-    SEAL_ENGINE_NEW = 0x2
+    SEAL_FLAG_NEW = 0x2
 } Seal_EngineFlag;
 
 struct Seal_Transform {
@@ -30,9 +30,9 @@ struct Seal_Transform {
     void transformMatrix(float*);
 };
 
-struct Seal_Object {
+struct Seal_Entity {
 public:
-    Seal_Object() : flags(0), engineFlags(0), uid(0), transform(), material(SEAL_NO_MATERIAL), mesh(SEAL_NO_MESH), texture(SEAL_NO_TEXTURE), color(SEAL_WHITE) {}
+    Seal_Entity() : flags(0), engineFlags(0), uid(0), transform(), material(SEAL_NO_MATERIAL), mesh(SEAL_NO_MESH), texture(SEAL_NO_TEXTURE), color(SEAL_WHITE) {}
 
     inline void setColor(const Seal_Color& c) {color = c; }
     inline void setTexture(Seal_Texture t) { texture = t; }
@@ -48,12 +48,12 @@ public:
     Seal_Texture texture;
     int mesh;
 
-    friend void Seal_RenderObject(Seal_Object* object, Seal_Scene* scene, float* parent);
+    friend void Seal_RenderObject(Seal_Entity* object, Seal_Scene* scene, float* parent);
 };
 
 /**
  * \brief renders a seal object to the screen
  */
-void Seal_RenderObject(Seal_Object* object, Seal_Scene* scene, float* parentTransform);
+void Seal_RenderObject(Seal_Entity* object, Seal_Scene* scene, float* parentTransform);
 
 #define Seal_LogObject(o) Seal_Log("P(%f %f %f)-V(%d %d %d)", o->transform.position.x, o->transform.position.y, o->transform.position.z, o->mesh, o->material, o->texture)

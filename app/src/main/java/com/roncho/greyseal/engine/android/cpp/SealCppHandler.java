@@ -44,5 +44,11 @@ public class SealCppHandler {
         return ByteBuffer.wrap(array, start, end).order(nativeByteOrder);
     }
 
+    public static void putString(ByteBuffer buffer, String str){
+        for(int i = 0; i < str.length(); i++)
+            buffer.put((byte)str.charAt(i));
+        buffer.put((byte)0);
+    }
+
     private static native byte[] JNIGet1();
 }

@@ -1,0 +1,10 @@
+
+position v3 0 0 1
+rotation qt 1 0 0 0
+scale v3 0.3 0.3 0.3
+
+flags 0x2
+texture path "textures/white"
+model path "models/axis.obj"
+color rgb 255 30 250
+material shader "vertex.glsl" "fragment.glsl"

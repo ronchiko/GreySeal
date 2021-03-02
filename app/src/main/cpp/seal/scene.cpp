@@ -4,7 +4,6 @@
 #include <iostream>
 #include <algorithm>
 
-
 #include "greyseal/object.h"
 #include "greyseal/scene.h"
 #include "greyseal/mesh.h"
@@ -31,13 +30,17 @@ void Seal_Transform::transformMatrix(float *matrix) {
 }
 
 void Seal_Camera::generateMatrix() {
-    Seal_MatrixPerspective(matrix, FOV, (float) Seal_Specs::width / (float) Seal_Specs::height, Z_NEAR, Z_FAR);
+    float view[16], perspective[16];
+    Seal_Vector3 forwards(0, 0, 1);
+    forwards = forwards * transform.rotation;
+    Seal_MatrixLookAt(view, forwards, transform.position);
+    Seal_MatrixPerspective(perspective, FOV, (float)Seal_Specs::width / (float) Seal_Specs::height, Z_NEAR, Z_FAR);
+    Seal_MatrixMul(matrix, perspective, view);
 }
 
-void Seal_RenderObject(Seal_Object* object, Seal_Scene* scene, float* parent){
+void Seal_RenderObject(Seal_Entity* object, Seal_Scene* scene, float* parent){
     // Check if the process will fail
     if(!object || !scene) return;
-
     // If there is a need for a transform computation, then compute only once
     float transform[16];
     if((object->mesh >= SEAL_NO_MESH && object->material >= SEAL_NO_MATERIAL)) {
@@ -84,14 +87,9 @@ void Seal_RenderObject(Seal_Object* object, Seal_Scene* scene, float* parent){
 
         glBindTexture(GL_TEXTURE_2D, SEAL_NO_TEXTURE);
     }
-/*
-    // Render children if possible
-    if(!object->children.empty()){
-        float newParent[16];
-        Seal_MatrixMul(newParent, parent, transform);
-        for(auto& child : object->children)
-            Seal_RenderObject(child, scene, newParent);
-    }*/
+
+    // If the object is rendered, then its no longer new
+    object->engineFlags &= ~SEAL_FLAG_NEW;
 }
 
 Seal_Scene::~Seal_Scene() {
@@ -100,7 +98,7 @@ Seal_Scene::~Seal_Scene() {
 }
 
 void Seal_Scene::drawScene() {
-    glClearColor(0, 255, 255, 255);
+    glClearColor(15/255.f, 15/255.f, 30/255.f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Render the over world
@@ -115,9 +113,9 @@ void Seal_Scene::drawScene() {
     glDisable(GL_DEPTH_TEST);
 }
 
-void Seal_Scene::addObject(Seal_Object **object) {
+void Seal_Scene::addObject(Seal_Entity **object) {
     root = (Seal_ObjectUnion*)realloc(root, (objects + 1) * sizeof(Seal_ObjectUnion));
     root[objects++] = Seal_ObjectUnion(*object);
     delete *object;
-    *object = (Seal_Object*)&root[objects - 1];
+    *object = (Seal_Entity*)&root[objects - 1];
 }

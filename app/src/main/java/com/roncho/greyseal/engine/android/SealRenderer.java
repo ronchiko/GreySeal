@@ -10,7 +10,7 @@ import javax.microedition.khronos.opengles.GL10;
 
 public class SealRenderer implements GLSurfaceView.Renderer {
 
-    private static native void init(int width, int height);
+    private static native void init(int width, int height, byte[] array);
     private static native void step(byte[] updatedData, byte[] engineCommands);
     private static native byte[] requestEngineData();
 
@@ -25,15 +25,17 @@ public class SealRenderer implements GLSurfaceView.Renderer {
 
     @Override
     public void onSurfaceChanged(GL10 gl10, int w, int h) {
-        init(w, h);
+        init(w, h, SealSystemManager.getEngineCalls());
     }
 
     @Override
     public void onDrawFrame(GL10 gl10) {
         // getSealObjects();
         SealObjectStream stream = new SealObjectStream(requestEngineData());
+
         SealSystemManager.runSystems(stream);
-        //byte[] instructions = SealSystemManager.getSealInstructions();
-        step(stream.getRaw(), new byte[0]);
+        byte[] instructions = SealSystemManager.getEngineCalls();
+
+        step(stream.getRaw(), instructions);
     }
 }

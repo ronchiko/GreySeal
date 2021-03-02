@@ -1,9 +1,11 @@
 package com.roncho.greyseal.engine.systems;
 
+import com.roncho.greyseal.engine.systems.instructions.SealCallType;
 import com.roncho.greyseal.engine.systems.instructions.SealCallsList;
 import com.roncho.greyseal.engine.systems.stream.SealEntity;
 import com.roncho.greyseal.engine.systems.stream.SealObjectStream;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 public class SealSystemManager {
@@ -18,13 +20,17 @@ public class SealSystemManager {
 
     public SealSystemManager(){
         systems = new ArrayList<>();
+        engineCalls = new SealCallsList();
     }
 
     public static void addSystem(SealSystem system){
         instance.systems.add(system);
     }
-
+    public static void queue(SealCallType type, ByteBuffer bb){
+        instance.engineCalls.queueCall(type, bb);
+    }
     public static void runSystems(SealObjectStream stream){
+        instance.engineCalls.reset();
         for (SealSystem system : instance.systems) system.updateOnce();
 
         while(stream.hasNext()) {

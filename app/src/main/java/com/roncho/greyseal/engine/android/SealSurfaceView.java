@@ -4,6 +4,8 @@ import android.content.Context;
 import android.opengl.GLSurfaceView;
 import android.view.MotionEvent;
 
+import com.roncho.greyseal.engine.TouchInput;
+
 public class SealSurfaceView extends GLSurfaceView {
 
     private SealRenderer renderer;
@@ -23,7 +25,14 @@ public class SealSurfaceView extends GLSurfaceView {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         performClick();
-        sendSealTouchEvent(event.getX(), event.getY());
+
+        if(event.getAction() == MotionEvent.ACTION_DOWN){
+            sendSealTouchEvent(event.getX(), event.getY());
+            TouchInput.touchEvent(event.getX(), event.getY());
+        }else if(event.getAction() == MotionEvent.ACTION_UP){
+            TouchInput.stopTouching();
+        }
+
         return super.onTouchEvent(event);
     }
 

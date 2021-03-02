@@ -70,4 +70,8 @@ public class SealEntity {
         bb.putInt(color).putInt(material).putInt(texture).putInt(mesh);
         SealCppHandler.projectCpp(buffer, bb, start, SealObjectStream.SIZEOF_OBJECT);
     }
+
+    public short localIndex(){
+        return (short)(start / SealObjectStream.SIZEOF_OBJECT);
+    }
 }

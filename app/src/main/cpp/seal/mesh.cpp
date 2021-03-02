@@ -30,9 +30,8 @@ void Seal_Mesh::intoAttributes(const GLint *vertex, const GLint *uv, const GLint
 }
 
 Seal_Mesh* Seal_GetMesh(int index){
-    if(meshes.find(index) == meshes.end() || index == -1){
+    if(meshes.find(index) == meshes.end() || index == -1)
         return nullptr;
-    }
     return meshes[index];
 }
 
@@ -127,6 +126,7 @@ int Seal_LoadMesh(const std::string& path){
         loadedMeshes[path] = index;
 
         delete [] raw;
+        Seal_Log("Loaded %d %d %d", vertecies.size() / 3, uvs.size() / 2, normals.size() / 3);
         Seal_Log("Successfully loaded mesh %s", path.c_str());
         return index;
     }

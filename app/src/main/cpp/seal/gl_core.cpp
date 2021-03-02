@@ -9,6 +9,8 @@
 #include "greyseal/scene.h"
 #include "greyseal/mesh.h"
 #include "greyseal/matrix.h"
+#include "greyseal/calls.h"
+#include "greyseal/preset.h"
 
 int Seal_Specs::width = 0;
 int Seal_Specs::height = 0;
@@ -17,38 +19,41 @@ static Seal_Scene* scene;
 static uint16_t objectUid;
 
 Seal_Texture defaultTextureId;
-Seal_Object* cube;
+Seal_Entity* cube;
 Seal_Texture textureId;
 
 int Seal_GlStart(int width, int height){
+    Seal_Log("Preparing rnd");
+    time_t t;
+    srand((unsigned)time(&t));
+
+    Seal_Log("Starting internal GL scene");
     Seal_Specs::width = width; Seal_Specs::height = height;
     glViewport(0, 0, width, height);
     scene = new Seal_Scene();
-
+    scene->camera.generateMatrix();
+    Seal_Log("Loading textures...");
     defaultTextureId = Seal_LoadTexture("textures/white");
-    textureId = Seal_LoadTexture("textures/seal.jpg");
+    textureId = Seal_LoadTexture("textures/spaceship-uvl.png");
 
-    Seal_Instantiate(&cube, {0.f, 0.f, -15.f});
 
-    cube->setMaterial(Seal_LoadMaterial("vertex.glsl", "fragment.glsl"));
-    cube->setMesh(Seal_LoadMesh("models/cube-nuv.obj"));
+    Seal_Log("Loading presets");
+    Seal_Preset preset = Seal_LoadCachePreset("presets/green-cube.ntt");
+    Seal_Log("Instatiating objects");
+    // Initialize player
+    Seal_Entity* playerNtt = nullptr;
+    Seal_Instantiate(&playerNtt);
+    playerNtt->transform.position = {0, 0, -20.f};
 
-    time_t t;
-    srand((unsigned)time(&t));
-    cube->setColor(SEAL_BLUE);
-    cube->setTexture(textureId);
-
-    // cube->flags = 0x1;
-    for(int i = 0; i < 100; i++){
-        Seal_Object* object;
-        Seal_Instantiate(&object, Seal_Vector3(rand() % 4 - 2, rand() % 4 - 2, rand() % 3 * -3 - 5));
-        object->setMesh(Seal_LoadMesh("models/cube-nuv.obj"));
-        object->transform.scale = Seal_Vector3(.3f, .3f, .3f);
-        object->setMaterial(Seal_LoadMaterial("vertex.glsl", "fragment.glsl"));
-        object->setColor(SEAL_GREEN);
-        object->flags = 0x1;
+    if(playerNtt) {
+//        playerNtt->flags = 0x3; // TODO: Clean temporary flags
+//        playerNtt->setMaterial(Seal_LoadMaterial("vertex.glsl", "fragment.glsl"));
+//        playerNtt->setMesh(Seal_LoadMesh("models/spaceship.obj"));
+//        playerNtt->transform.rotation = Seal_Quaternion::euler(-90, -90, 0);
+//
+//        playerNtt->setTexture(textureId);
+        Seal_OverwriteObject(playerNtt, preset, false);
     }
-
     return 1;
 }
 
@@ -60,12 +65,12 @@ void Seal_PopDestroy(void){
             if(i < scene->objects - 1) {
                 // If not last item move the array backwards
                 void* nextAddress = &scene->root[i + 1];
-                std::memmove(&scene->root[i], nextAddress, (scene->objects - i) * sizeof(Seal_Object));
+                std::memmove(&scene->root[i], nextAddress, (scene->objects - i) * sizeof(Seal_Entity));
             }
             newObjects--;
         }
     }
-    scene->root = (Seal_ObjectUnion*)realloc(scene->root, newObjects * sizeof(Seal_Object));
+    scene->root = (Seal_ObjectUnion*)realloc(scene->root, newObjects * sizeof(Seal_Entity));
     scene->objects = newObjects;
 }
 
@@ -140,10 +145,10 @@ GLuint Seal_CompileProgram(const Seal_String& vertexPath, const Seal_String& fra
     return program;
 }
 
-void Seal_Render(Seal_Byte* updatedBytes, Seal_Byte*){
-
+void Seal_Render(Seal_Byte* updatedBytes, Seal_Byte* calls, size_t callArrayLength){
+    // First we update the objects info
     memcpy(scene->root, updatedBytes, scene->bytes());
-
+    Seal_ExecuteEngineCalls(calls, callArrayLength);
     // Destroy all queue objects before rendering
     Seal_PopDestroy();
 
@@ -152,20 +157,27 @@ void Seal_Render(Seal_Byte* updatedBytes, Seal_Byte*){
     }
 }
 
-void Seal_Destroy(Seal_Object** object){
+void Seal_Destroy(Seal_Entity** object){
     (*object)->engineFlags |= SEAL_ENGINE_DESTROY;
     *object = nullptr;
 }
 
-void Seal_Instantiate(Seal_Object** ptr, const Seal_Vector3& position){
+void Seal_Instantiate(Seal_Entity** ptr){
     scene->root = (Seal_ObjectUnion*)realloc(scene->root, (scene->objects + 1) * sizeof(Seal_ObjectUnion));
     scene->root[scene->objects++] = Seal_ObjectUnion();
-    *ptr = (Seal_Object*)&scene->root[scene->objects - 1];
-    (*ptr)->transform.position = position;
+    *ptr = (Seal_Entity*)&scene->root[scene->objects - 1];
+    (*ptr)->engineFlags |= SEAL_FLAG_NEW;
+    (*ptr)->uid = objectUid++;
 }
 
 Seal_Scene* Seal_CurrentScene(void){
     return scene;
+}
+
+Seal_Entity* Seal_Find(Seal_Short id){
+    for(int i = 0; i < scene->objects; i++)
+        if(scene->root[i].object.uid == id) return &scene->root[i].object;
+    return nullptr;
 }
 
 void Seal_GlEnd(){

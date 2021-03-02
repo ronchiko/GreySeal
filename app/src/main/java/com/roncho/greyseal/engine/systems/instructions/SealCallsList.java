@@ -26,7 +26,7 @@ public class SealCallsList {
         node.next = null;
         node.operands = SealCppHandler.arrayCpp(operands);
         node.type = type;
-        finalBufferSize += node.type.getNextBytes() + 1; // The amount of used bytes + instruction code
+        finalBufferSize += node.operands.length + 1; // The amount of used bytes + instruction code
 
         if(head == null){
             head = tail = node;
@@ -39,7 +39,17 @@ public class SealCallsList {
         byte[] buffer = new byte[finalBufferSize];
         int i = 0;
         SealCallNode node = head;
-
+        while(node != null){
+            buffer[i++] = node.type.getCode();
+            for(int j =0; j < node.operands.length; j++)
+                buffer[i++] = node.operands[j];
+            node = node.next;
+        }
         return buffer;
+    }
+
+    public void reset(){
+        head = tail = null;
+        finalBufferSize = 0;
     }
 }

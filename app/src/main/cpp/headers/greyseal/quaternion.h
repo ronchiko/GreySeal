@@ -72,6 +72,25 @@ union Seal_Quaternion {
         matrix[9] = 2 * y * z + 2 * x * w;
         matrix[10] = 2 * (w * w + z * z) - 1;
     }
+    inline static Seal_Quaternion euler(float x, float y, float z){
+        x *= Deg2Rad;
+        y *= Deg2Rad;
+        z *= Deg2Rad;
+
+        float cy = cosf(y * .5f);
+        float sy = sinf(y * .5f);
+        float cx = cosf(x * .5f);
+        float sx = sinf(x * .5f);
+        float cz = cosf(z * .5f);
+        float sz = sinf(z * .5f);
+
+        return {
+                cx * cy * cz + sx * sy * sz,
+                sx * cy * cz - cx * sy * sz,
+                cx * sy * cz + sx * cy * sz,
+                cx * cy * sz - sx * sy * cz
+        };
+    }
     /**
      * \brief create a quaternion for an angle axis
      */

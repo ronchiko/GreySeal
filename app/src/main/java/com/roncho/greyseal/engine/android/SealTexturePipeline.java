@@ -26,6 +26,7 @@ public class SealTexturePipeline {
     public static int load(String path){
         try(InputStream stream = assets.open(path)){
             Bitmap e = BitmapFactory.decodeStream(stream);
+
             int width = e.getWidth(), height = e.getHeight();
             byte[] array = new byte[width * height * 4];
 
@@ -47,7 +48,7 @@ public class SealTexturePipeline {
 
             return registerBmp(array, width, height);
         }catch (IOException e){
-            Log.e("Greyseal", "Failed to load texture -1");
+            Log.e("Greyseal", "Failed to load texture " + path);
         }
         return -1;
     }

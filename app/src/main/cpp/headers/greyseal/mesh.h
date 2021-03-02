@@ -6,6 +6,8 @@
 
 #define SEAL_NO_MESH -1
 
+typedef int Seal_MeshHandle;
+
 /**
  * Represents a 3d mesh
  */

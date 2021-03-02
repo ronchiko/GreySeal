@@ -5,7 +5,7 @@
 #include <GLES2/gl2.h>
 #include "sealog.h"
 
-typedef GLuint Seal_Texture;
+typedef int Seal_Texture;
 
 #define SEAL_NO_TEXTURE 0
 
