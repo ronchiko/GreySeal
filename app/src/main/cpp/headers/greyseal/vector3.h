@@ -3,6 +3,7 @@
 #include "greyseal/quaternion.h"
 
 struct Seal_Vector3 {
+public:
     float x, y, z;
 
     Seal_Vector3() : x(0), y(0), z(0) {}
@@ -17,6 +18,10 @@ struct Seal_Vector3 {
     }
     inline Seal_Vector3 operator*(float f) const {
         return Seal_Vector3(x * f, y * f, z * f);
+    }
+    inline Seal_Vector3 operator-(void) const{
+        Seal_Vector3 v3(-x, -y, -z);
+        return v3;
     }
 
     inline Seal_Vector3& operator+=(const Seal_Vector3& o) {
@@ -44,6 +49,6 @@ struct Seal_Vector3 {
     inline static Seal_Vector3 cross(const Seal_Vector3& a, const Seal_Vector3& b){
         return {a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x};
     }
-};
 
-#define F_ARR(vec) (float*)&(vec).x
+    inline float& operator[](int index) { return *(&x + index); }
+};

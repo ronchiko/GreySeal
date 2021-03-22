@@ -1,8 +1,10 @@
 
 #include <GLES2/gl2.h>
-
+#include <GLES2/gl2ext.h>
+#include <vector>
 #include "sealog.h"
 
+#include "greyseal/initialize.h"
 #include "gs_android.h"
 #include "greyseal/texture.h"
 #include "greyseal/gl.h"
@@ -19,8 +21,6 @@ static Seal_Scene* scene;
 static uint16_t objectUid;
 
 Seal_Texture defaultTextureId;
-Seal_Entity* cube;
-Seal_Texture textureId;
 
 int Seal_GlStart(int width, int height){
     Seal_Log("Preparing rnd");
@@ -31,48 +31,13 @@ int Seal_GlStart(int width, int height){
     Seal_Specs::width = width; Seal_Specs::height = height;
     glViewport(0, 0, width, height);
     scene = new Seal_Scene();
-    scene->camera.generateMatrix();
+    scene->camera().transform.rotation = Seal_Quaternion::euler(351.f, 0, 0);
     Seal_Log("Loading textures...");
     defaultTextureId = Seal_LoadTexture("textures/white");
-    textureId = Seal_LoadTexture("textures/spaceship-uvl.png");
-
-
-    Seal_Log("Loading presets");
-    Seal_Preset preset = Seal_LoadCachePreset("presets/green-cube.ntt");
-    Seal_Log("Instatiating objects");
     // Initialize player
-    Seal_Entity* playerNtt = nullptr;
-    Seal_Instantiate(&playerNtt);
-    playerNtt->transform.position = {0, 0, -20.f};
-
-    if(playerNtt) {
-//        playerNtt->flags = 0x3; // TODO: Clean temporary flags
-//        playerNtt->setMaterial(Seal_LoadMaterial("vertex.glsl", "fragment.glsl"));
-//        playerNtt->setMesh(Seal_LoadMesh("models/spaceship.obj"));
-//        playerNtt->transform.rotation = Seal_Quaternion::euler(-90, -90, 0);
-//
-//        playerNtt->setTexture(textureId);
-        Seal_OverwriteObject(playerNtt, preset, false);
-    }
-    return 1;
+    return SEAL_SUCCESS;
 }
 
-void Seal_PopDestroy(void){
-    // Shift the memory according to the shifts
-    size_t newObjects = scene->objects;
-    for(size_t i = 0; i < scene->objects; i++){
-        if(scene->root[i].object.engineFlags & SEAL_ENGINE_DESTROY){
-            if(i < scene->objects - 1) {
-                // If not last item move the array backwards
-                void* nextAddress = &scene->root[i + 1];
-                std::memmove(&scene->root[i], nextAddress, (scene->objects - i) * sizeof(Seal_Entity));
-            }
-            newObjects--;
-        }
-    }
-    scene->root = (Seal_ObjectUnion*)realloc(scene->root, newObjects * sizeof(Seal_Entity));
-    scene->objects = newObjects;
-}
 
 static GLuint Seal_CompileShader(Seal_C_String path, GLenum shaderType){
 
@@ -147,13 +112,15 @@ GLuint Seal_CompileProgram(const Seal_String& vertexPath, const Seal_String& fra
 
 void Seal_Render(Seal_Byte* updatedBytes, Seal_Byte* calls, size_t callArrayLength){
     // First we update the objects info
-    memcpy(scene->root, updatedBytes, scene->bytes());
+    memcpy(scene->start, updatedBytes, scene->bytes());
     Seal_ExecuteEngineCalls(calls, callArrayLength);
-    // Destroy all queue objects before rendering
-    Seal_PopDestroy();
+
+    scene->camera().transform.rotation = scene->camera().transform.rotation * Seal_Quaternion::euler(0, 0.3f, 0);
 
     if(scene) {
-        scene->drawScene();
+        scene->cleanse();
+        scene->render();
+        Seal_LateInitialize();
     }
 }
 
@@ -163,10 +130,7 @@ void Seal_Destroy(Seal_Entity** object){
 }
 
 void Seal_Instantiate(Seal_Entity** ptr){
-    scene->root = (Seal_ObjectUnion*)realloc(scene->root, (scene->objects + 1) * sizeof(Seal_ObjectUnion));
-    scene->root[scene->objects++] = Seal_ObjectUnion();
-    *ptr = (Seal_Entity*)&scene->root[scene->objects - 1];
-    (*ptr)->engineFlags |= SEAL_FLAG_NEW;
+    *ptr = &Seal_QueueLateEntity();
     (*ptr)->uid = objectUid++;
 }
 
@@ -175,8 +139,8 @@ Seal_Scene* Seal_CurrentScene(void){
 }
 
 Seal_Entity* Seal_Find(Seal_Short id){
-    for(int i = 0; i < scene->objects; i++)
-        if(scene->root[i].object.uid == id) return &scene->root[i].object;
+    for(int i = 1; i < scene->count; i++)
+        if(scene->start[i].object.uid == id) return &scene->start[i].object;
     return nullptr;
 }
 

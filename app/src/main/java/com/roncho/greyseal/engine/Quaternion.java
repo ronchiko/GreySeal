@@ -3,6 +3,9 @@ package com.roncho.greyseal.engine;
 import java.nio.ByteBuffer;
 
 public class Quaternion {
+
+    public static final int SIZE_IN_BYTE = 16;
+
     public float w, x, y, z;
 
     public Quaternion(float w, float x, float y, float z){

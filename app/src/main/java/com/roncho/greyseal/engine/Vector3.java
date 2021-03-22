@@ -3,6 +3,9 @@ package com.roncho.greyseal.engine;
 import java.nio.ByteBuffer;
 
 public class Vector3 {
+
+    public static final int SIZE_IN_BYTES = 12;
+
     public float x, y, z;
 
     public Vector3(float x, float y, float z){
@@ -23,5 +26,14 @@ public class Vector3 {
         v.y = buffer.getFloat();
         v.z = buffer.getFloat();
         return v;
+    }
+
+    @Override
+    public String toString() {
+        return "Vector3{" +
+                "x=" + x +
+                ", y=" + y +
+                ", z=" + z +
+                '}';
     }
 }

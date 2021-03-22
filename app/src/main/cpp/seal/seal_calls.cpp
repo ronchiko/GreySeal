@@ -16,6 +16,8 @@
 typedef int (*_Seal_Instruction)(Seal_ByteStream& stream);
 static Seal_String errorMsg;
 
+static int Seal_StreamDoCommand(Seal_ByteStream& stream);
+
 INST(Nop){
     return SEAL_SUCCESS;
 }
@@ -40,9 +42,8 @@ INST(Instatiate0){
     return SEAL_SUCCESS;
 }
 INST(Instatiate1){
-    Seal_C_String preset;
+    Seal_C_String preset = nullptr;
     Seal_Vector3 pos;
-
     READ(stream.readString(&preset), "Expected a string");
     READ(stream.readVector3(&pos), "Expected a vector 3");
 
@@ -112,6 +113,19 @@ INST(LoadMesh){
     return SEAL_SUCCESS;
 }
 
+INST(For){
+    Seal_Byte times;
+    READ(stream.readByte(&times), "Expected a byte");
+
+    size_t lpstrt = stream.getPointer();
+    for(Seal_Byte b = 0; b < times; b++) {
+        if(Seal_StreamDoCommand(stream) == SEAL_FAILURE) return SEAL_FAILURE;
+        if (b != times - 1) stream.setPointer(lpstrt);
+    }
+
+    return SEAL_SUCCESS;
+}
+
 static _Seal_Instruction instructions[] = {
        &SealInst_Nop,
        &SealInst_Instatiate0,
@@ -119,29 +133,43 @@ static _Seal_Instruction instructions[] = {
        &SealInst_Instatiate2,
        &SealInst_Destroy,
        &SealInst_LoadTexture,
-       &SealInst_LoadMaterial
+       &SealInst_LoadMaterial,
+       &SealInst_LoadMesh,
+       &SealInst_For,
+       NULL,
+       NULL,
+       NULL,
 };
+
+#define SEAL_FAILURE_FATAL -2
+static int Seal_StreamDoCommand(Seal_ByteStream& stream){
+    // Read opcode from stream
+    Seal_Byte opcode;
+
+    if(stream.readByte(&opcode) == SEAL_FAILURE){
+        Seal_LogError("Failed to read opcode from instructions.");
+        return SEAL_FAILURE_FATAL;
+    }
+    Seal_Log("Reading instuction: 0x%X", opcode);
+
+    // Check if we got an illegal opcode
+    if(SEAL_INST_NOP > opcode || opcode >= __SEAL_OPCODE_MAX__){
+        Seal_LogError("Invalid opcode 0x%X.", (int)opcode);
+        return SEAL_FAILURE;
+    }
+
+    _Seal_Instruction instruction = instructions[opcode - SEAL_INST_NOP];
+    if(instruction(stream) != SEAL_SUCCESS){
+        Seal_LogError("Error executing instruction 0x%X: %s.", opcode, errorMsg.c_str());
+        return SEAL_FAILURE;
+    }
+    Seal_Log("Executed instuction: 0x%X", opcode);
+    return SEAL_SUCCESS;
+}
 
 void Seal_ExecuteEngineCalls(Seal_Byte* buffer, size_t length){
     Seal_ByteStream stream(buffer, length);
     while(stream.hasNext()){
-        // Read opcode from stream
-        Seal_Byte opcode;
-        if(stream.readByte(&opcode) == SEAL_FAILURE){
-            Seal_LogError("Failed to read opcode from instructions.");
-            return;
-        }
-
-        // Check if we got an illegal opcode
-        if(SEAL_INST_NOP > opcode || opcode >= __SEAL_OPCODE_MAX__){
-            Seal_LogError("Invalid opcode 0x%X.", (int)opcode);
-            continue;
-        }
-
-        _Seal_Instruction instruction = instructions[opcode - SEAL_INST_NOP];
-        if(instruction(stream) != SEAL_SUCCESS){
-            Seal_LogError("Error executing instruction 0x%X: %s.", opcode, errorMsg.c_str());
-            continue;
-        }
+        if(Seal_StreamDoCommand(stream) == SEAL_FAILURE_FATAL) return;
     }
 }

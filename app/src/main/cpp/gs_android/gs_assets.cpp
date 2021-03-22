@@ -20,7 +20,7 @@ int Seal_LoadTxt(Seal_String path, char** buffer) {
     AAsset* asset = AAssetManager_open(manager, cPath, AASSET_MODE_STREAMING);
 
     if(!asset) {
-        Seal_LogError("No asset named %s.", cPath);
+        Seal_LogError("No asset named '%s'.", cPath);
         return -1;
     }
 

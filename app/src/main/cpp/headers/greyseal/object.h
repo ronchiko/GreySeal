@@ -15,7 +15,8 @@ class Seal_Scene;
 
 typedef enum _Seal_EngineFlag_e : Seal_EngineFlags {
     SEAL_ENGINE_DESTROY = 0x1,
-    SEAL_FLAG_NEW = 0x2
+    SEAL_ENGINE_NEW = 0x2,
+    SEAL_ENGINE_DONT_DRAW = 0x4
 } Seal_EngineFlag;
 
 struct Seal_Transform {
@@ -23,7 +24,7 @@ struct Seal_Transform {
     Seal_Quaternion rotation;
     Seal_Vector3 scale;
 
-    Seal_Transform() : position({0, 0, -10}), rotation({1, 0, 0, 0}), scale({1, 1, 1}) {}
+    Seal_Transform() : position({0, 0, 0}), rotation({1, 0, 0, 0}), scale({1, 1, 1}) {}
 
     void move(float x, float y, float z);
 
@@ -48,12 +49,12 @@ public:
     Seal_Texture texture;
     int mesh;
 
-    friend void Seal_RenderObject(Seal_Entity* object, Seal_Scene* scene, float* parent);
+    friend void Seal_RenderObject(Seal_Entity* object, const Seal_Scene* scene, float* parent, float* view);
 };
 
 /**
  * \brief renders a seal object to the screen
  */
-void Seal_RenderObject(Seal_Entity* object, Seal_Scene* scene, float* parentTransform);
+void Seal_RenderObject(Seal_Entity* object, const Seal_Scene* scene, float* parentTransform, float* view);
 
 #define Seal_LogObject(o) Seal_Log("P(%f %f %f)-V(%d %d %d)", o->transform.position.x, o->transform.position.y, o->transform.position.z, o->mesh, o->material, o->texture)

@@ -17,6 +17,7 @@ typedef uint8_t Seal_Byte;
 typedef int32_t Seal_Int;
 typedef int16_t Seal_Short;
 typedef float Seal_Float;
+typedef int Seal_Size;
 
 #define SEAL_TRUE 1
 #define SEAL_FALSE 0

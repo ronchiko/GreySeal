@@ -30,4 +30,9 @@ public abstract class SealSystem {
      * @param entity The new entity
      */
     public void onNewEntity(SealEntity entity) {}
+    /**
+     * Called when the system picks up an entity marked for destruction
+     * @param entity The marked entity
+     */
+    public void onEntityDestroyed(SealEntity entity) {}
 }

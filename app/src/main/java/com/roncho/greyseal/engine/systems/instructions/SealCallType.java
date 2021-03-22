@@ -9,9 +9,11 @@ public enum SealCallType {
     LOAD_TEXTURE(5),         // LDT str
     LOAD_MATERIAL(6),        // LDS str str
     LOAD_MESH(7),            // LDM str
-    CLONE_1(8),              // CLN oid
-    CLONE_2(9),              // CLN oid v3 qt v3
-    CLONE_3(10);             // CLN oid v3
+    FOR(8),                  // FOR byte INST
+    CLONE_1(9),              // CLN oid
+    CLONE_2(10),             // CLN oid v3 qt v3
+    CLONE_3(11),
+    CAMERA(12);             // CLN oid v3
 
 
     private final byte code;

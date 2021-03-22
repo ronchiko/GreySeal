@@ -14,6 +14,7 @@
 #include "jseal.h"
 
 static constexpr int ONE = 1;
+static bool __SEAL_INITIALIZED = false;
 
 extern "C" {
     JNI_FNC(void) Java_com_roncho_greyseal_engine_SealEngineActivity_startEngine(JNIEnv* env, jclass, jobject assetManager){
@@ -30,23 +31,24 @@ extern "C" {
 
     JNI_FNC(void) Java_com_roncho_greyseal_engine_android_SealRenderer_init(JNIEnv* env, jclass, jint width, jint height, jbyteArray instr){
         Seal_Log("Starting open GL");
-        Seal_InitTexturePipeline(env);
-        Seal_SetupNttEnvironment();
-        Seal_GlStart(width, height);
-        Seal_Byte* sealCommands = (Seal_Byte*)env->GetByteArrayElements(instr, JNI_FALSE);
-        size_t length = env->GetArrayLength(instr);
-        Seal_ExecuteEngineCalls(sealCommands, length);
+        if(!__SEAL_INITIALIZED) {
+            Seal_InitTexturePipeline(env);
+            Seal_SetupNttEnvironment();
+            Seal_GlStart(width, height);
+            Seal_Byte *sealCommands = (Seal_Byte *) env->GetByteArrayElements(instr, JNI_FALSE);
+            size_t length = env->GetArrayLength(instr);
+            Seal_ExecuteEngineCalls(sealCommands, length);
+            __SEAL_INITIALIZED = true;
+        }
         Seal_Log("Open GL started successfully");
     }
     JNI_FNC(void) Java_com_roncho_greyseal_engine_android_SealRenderer_step(JNIEnv* e, jclass, jbyteArray update, jbyteArray commands){
-        Seal_Byte* sealUpdate = (Seal_Byte *)e->GetByteArrayElements(update, JNI_FALSE);
-        Seal_Byte* sealCommands = (Seal_Byte*)e->GetByteArrayElements(commands, JNI_FALSE);
-        size_t commandsLength = e->GetArrayLength(commands);
-        Seal_Render(sealUpdate, sealCommands, commandsLength);
-    }
-
-    JNI_FNC(void) Java_com_roncho_greyseal_engine_android_SealSurfaceView_sendSealTouchEvent(JNIEnv*, jobject, jfloat x, jfloat y){
-
+        if(__SEAL_INITIALIZED) {
+            Seal_Byte *sealUpdate = (Seal_Byte *) e->GetByteArrayElements(update, JNI_FALSE);
+            Seal_Byte *sealCommands = (Seal_Byte *) e->GetByteArrayElements(commands, JNI_FALSE);
+            size_t commandsLength = e->GetArrayLength(commands);
+            Seal_Render(sealUpdate, sealCommands, commandsLength);
+        }
     }
 
     JNI_FNC(jint) Java_com_roncho_greyseal_engine_systems_stream_SealObjectStream_getSizeofNativeObject(JNIEnv*, jclass){
@@ -66,11 +68,11 @@ extern "C" {
     JNI_FNC(jbyteArray) Java_com_roncho_greyseal_engine_android_SealRenderer_requestEngineData(JNIEnv* e, jclass){
         size_t bytesSize = Seal_CurrentScene()->bytes();
         jbyteArray array = e->NewByteArray(bytesSize);
-        jbyte * jArray = (jbyte*)(Seal_CurrentScene()->byteArray());
+        jbyte * jArray = (jbyte*)(Seal_CurrentScene()->bytesArray());
         e->SetByteArrayRegion(array, 0, bytesSize, jArray);
+
         return array;
     }
-
 
     // TODO: When the engine is done, maybe take look and try to optimize with caching
     JNI_FNC(void) Java_com_roncho_greyseal_engine_android_cpp_SealLinkedCache_addTexture(JNIEnv* env, jclass cls, jstring str, jint index){

@@ -2,6 +2,8 @@ package com.roncho.greyseal.engine;
 
 import android.content.res.AssetManager;
 import android.os.Bundle;
+import android.view.DragEvent;
+import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -25,6 +27,7 @@ public abstract class SealEngineActivity extends AppCompatActivity {
         startEngine(getAssets());
         SealTexturePipeline.init(getAssets());
         SealSystemManager.newManager();
+        SealMetrics.reload(this);
 
         loadResources();
 

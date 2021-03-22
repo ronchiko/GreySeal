@@ -3,9 +3,9 @@
 
 #define READ_FUNC(name, cast) \
 	int Seal_ByteStream::name(cast* value){ \
-		Seal_Byte* buf;			\
-		if(buf = advance(sizeof(cast))){\
-			*value = *(cast*)buf;	\
+		Seal_Byte* buf = advance(sizeof(cast));			\
+		if(buf){\
+			memcpy(value, buf, sizeof(cast));\
 			return SEAL_SUCCESS;	\
 		}				\
 		return SEAL_FAILURE;		\
@@ -34,7 +34,7 @@ READ_FUNC(readVector3, Seal_Vector3);
 
 #define NOW count + current
 
-int Seal_ByteStream::readString(Seal_C_String * value){
+int Seal_ByteStream::readString(Seal_C_String* value){
     int count = 0;
     while(NOW < length && buffer[NOW] != '\0')
         count++;
@@ -43,7 +43,7 @@ int Seal_ByteStream::readString(Seal_C_String * value){
     // If the current one isn't zero, then we ran out of space
     if(buffer[NOW] != '\0') return SEAL_FAILURE;
     *value = (char*)(buffer + current);
-    advance(count);
+    advance(count + 1);
     return SEAL_SUCCESS;
 }
 

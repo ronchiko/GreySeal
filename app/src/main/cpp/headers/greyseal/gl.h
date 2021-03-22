@@ -6,6 +6,8 @@
 
 namespace Seal_Specs {
     extern int width, height;
+
+    inline float ratio(void) { return (float)width / height; }
 };
 
 extern Seal_Texture defaultTextureId;

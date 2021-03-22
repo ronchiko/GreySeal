@@ -69,8 +69,6 @@ inline void Seal_CopyVector(float* _Dst, size_t _DstOff, float* _Src, size_t _Sr
 }
 
 inline void Seal_MatrixLookAt(float* matrix, const Seal_Vector3& zAxis, const Seal_Vector3& eye){
-    Seal_IdentityMatrix(matrix);
-
     matrix[3] = matrix[7] = matrix[11] = 0; matrix[15] = 1;
 
     Seal_Vector3 xAxis = Seal_Vector3::cross({0, -1, 0}, zAxis);
@@ -80,9 +78,9 @@ inline void Seal_MatrixLookAt(float* matrix, const Seal_Vector3& zAxis, const Se
     matrix[4] = xAxis.y; matrix[5] = yAxis.y; matrix[6]  = zAxis.y;
     matrix[8] = xAxis.z; matrix[9] = yAxis.z; matrix[10] = zAxis.z;
 
-    matrix[12] = - (eye * xAxis);
-    matrix[13] = - (eye * yAxis);
-    matrix[14] = - (eye * zAxis);
+    matrix[12] = (-eye * xAxis);
+    matrix[13] = (-eye * yAxis);
+    matrix[14] = (-eye * zAxis);
 }
 
 inline void Seal_MatrixPerspective(float* matrix, float fov, float ratio, float zNear, float zFar){

@@ -34,15 +34,17 @@ add_library( # Sets the name of the library.
 
         # Provides a relative path to your source file(s).
         seal/gl_core.cpp
-        seal/mesh.cpp
-        seal/material.cpp
-        seal/texture.cpp
+        seal/engine/mesh.cpp
+        seal/engine/material.cpp
+        seal/engine/texture.cpp
         gs_android/gs_assets.cpp
         seal/scene.cpp
         seal/seal_calls.cpp
-        seal/preset.cpp
+        seal/engine/preset.cpp
         seal/bytestream.cpp
         seal/jseal.cpp
+
+        seal/engine/initialize.cpp
 
         native-lib.cpp )
 

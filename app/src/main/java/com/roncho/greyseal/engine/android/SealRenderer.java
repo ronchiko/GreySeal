@@ -1,7 +1,13 @@
 package com.roncho.greyseal.engine.android;
 
 import android.opengl.GLSurfaceView;
+import android.opengl.Matrix;
+import android.util.Log;
 
+import com.roncho.greyseal.engine.SealCamera;
+import com.roncho.greyseal.engine.SealEngine;
+import com.roncho.greyseal.engine.SealLog;
+import com.roncho.greyseal.engine.android.cpp.SealLinkedCache;
 import com.roncho.greyseal.engine.systems.SealSystemManager;
 import com.roncho.greyseal.engine.systems.stream.SealObjectStream;
 
@@ -37,5 +43,6 @@ public class SealRenderer implements GLSurfaceView.Renderer {
         byte[] instructions = SealSystemManager.getEngineCalls();
 
         step(stream.getRaw(), instructions);
+        Input.instance.remove();
     }
 }

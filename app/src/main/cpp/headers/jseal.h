@@ -50,5 +50,4 @@ private:
     const char* _chars;
     size_t _length;
 };
-
 void Seal_NewThreadJNIEnv(JNIEnv* env);

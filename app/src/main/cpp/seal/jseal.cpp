@@ -2,6 +2,8 @@
 #include <jni.h>
 
 #include "jseal.h"
+#include "greyseal/scene.h"
+#include "greyseal/gl.h"
 
 static JNIEnv* runningEnv;
 

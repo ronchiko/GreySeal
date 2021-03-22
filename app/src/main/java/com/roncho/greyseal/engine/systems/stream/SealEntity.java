@@ -29,7 +29,7 @@ public class SealEntity {
 
     private final int start;
     public int userFlags;
-    public final short engineFlags, uid;
+    public short engineFlags, uid;
 
     public Vector3 position;
     public Quaternion rotation;
@@ -74,4 +74,8 @@ public class SealEntity {
     public short localIndex(){
         return (short)(start / SealObjectStream.SIZEOF_OBJECT);
     }
+
+    public boolean check(SealEngineFlags flag) { return (engineFlags & flag.value) != 0; }
+    public void activate(SealEngineFlags flag) { engineFlags |= flag.value; }
+    public void deactivate(SealEngineFlags flag) { engineFlags &= flag.mask; }
 }

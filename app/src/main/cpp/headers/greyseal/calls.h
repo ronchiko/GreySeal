@@ -22,6 +22,8 @@ public:
 
     inline Seal_Bool hasNext(void) { return current < length; }
 
+    inline void setPointer(size_t ind) { current = ind; }
+    inline size_t getPointer(void) { return current; }
 private:
     Seal_Byte* advance(int);
 
@@ -39,6 +41,7 @@ typedef enum _Seal_CallType_e : Seal_Byte {
     SEAL_INST_LOAD_TEXTURE,         // LDT str
     SEAL_INST_LOAD_MATERIAL,        // LDS str str
     SEAL_INST_LOAD_MESH,            // LDM str
+    SEAL_INST_FOR,                  // FOR byte [INSTRUCTION]
     SEAL_INST_CLONE_1,              // CLN oid
     SEAL_INST_CLONE_2,              // CLN oid v3 qt v3
     SEAL_INST_CLONE_3,              // CLN oid v3
