@@ -3,10 +3,14 @@ package com.roncho.greyseal.engine.android;
 import android.annotation.SuppressLint;
 import android.view.MotionEvent;
 
+import androidx.annotation.NonNull;
+
 import com.roncho.greyseal.engine.SealLog;
 import com.roncho.greyseal.engine.Vector2;
 
-public class Input {
+import java.util.Iterator;
+
+public final class Input {
 
     private static final int INCREMENT_STEP = 10;
 
@@ -122,6 +126,35 @@ public class Input {
         return touches[count++] = new Touch(pid);
     }
 
+    public static class TouchArray implements Iterable<Touch> {
+        private Touch[] array;
+
+        TouchArray(Touch[] array){
+            this.array = array;
+        }
+
+
+        @NonNull
+        @Override
+        public Iterator<Touch> iterator() {
+            return new Iterator<Touch>() {
+
+                private int i = 0;
+
+                @Override
+                public boolean hasNext() {
+                    return i >= 0 && i < array.length;
+                }
+
+                @Override
+                public Touch next() {
+                    return array[i++];
+                }
+            };
+        }
+    }
+
+    public static TouchArray touches() { return new TouchArray(instance.touches); }
     public static int touchCount() { return instance.count; }
     public static Touch touch(int index) { return instance.touches[index]; }
 }

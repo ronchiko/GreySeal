@@ -16,6 +16,8 @@
 static constexpr int ONE = 1;
 static bool __SEAL_INITIALIZED = false;
 
+static float cameraTransformArray[7];
+
 extern "C" {
     JNI_FNC(void) Java_com_roncho_greyseal_engine_SealEngineActivity_startEngine(JNIEnv* env, jclass, jobject assetManager){
         Seal_Log("Starting Engine");
@@ -28,6 +30,17 @@ extern "C" {
         Seal_GlEnd();
         Seal_Log("Closed engine");
     }
+    JNI_FNC(void) Java_com_roncho_greyseal_engine_SealEngineActivity_preloadCamera(JNIEnv* e, jclass, jfloatArray transform){
+        // Length is always 7
+        float *elements = e->GetFloatArrayElements(transform, JNI_FALSE);
+
+        memcpy(cameraTransformArray, elements, 7 * sizeof(float));
+        std::stringstream  ss;
+        for(int i = 0; i < 7; i++){
+            ss << cameraTransformArray[i] << ", ";
+        }
+        Seal_Log("Camera: %s", ss.str().c_str());
+    }
 
     JNI_FNC(void) Java_com_roncho_greyseal_engine_android_SealRenderer_init(JNIEnv* env, jclass, jint width, jint height, jbyteArray instr){
         Seal_Log("Starting open GL");
@@ -38,6 +51,7 @@ extern "C" {
             Seal_Byte *sealCommands = (Seal_Byte *) env->GetByteArrayElements(instr, JNI_FALSE);
             size_t length = env->GetArrayLength(instr);
             Seal_ExecuteEngineCalls(sealCommands, length);
+            Seal_SetCamera(cameraTransformArray);
             __SEAL_INITIALIZED = true;
         }
         Seal_Log("Open GL started successfully");
@@ -51,10 +65,10 @@ extern "C" {
         }
     }
 
-    JNI_FNC(jint) Java_com_roncho_greyseal_engine_systems_stream_SealObjectStream_getSizeofNativeObject(JNIEnv*, jclass){
+    JNI_FNC(jint) Java_com_roncho_greyseal_engine_systems_stream_EntityStream_getSizeofNativeObject(JNIEnv*, jclass){
         return sizeof(Seal_Entity);
     }
-    JNI_FNC(jint) Java_com_roncho_greyseal_engine_systems_stream_SealEntity_getObjectPayloadSize(JNIEnv*, jclass){
+    JNI_FNC(jint) Java_com_roncho_greyseal_engine_systems_stream_Entity_getObjectPayloadSize(JNIEnv*, jclass){
         return 0;   // Currently there is not a feature for individual payloads
     }
 

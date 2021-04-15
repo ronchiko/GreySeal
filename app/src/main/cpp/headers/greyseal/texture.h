@@ -21,3 +21,5 @@ int Seal_InitTexturePipeline(JNIEnv* e);
  * \return the GL index of the loaded texture
  */
 Seal_Texture Seal_LoadTexture(const Seal_String& path);
+Seal_Texture Seal_LoadWhiteTexture(void);
+int Seal_LoadTextureFromJava(JNIEnv*, jbyteArray, jint, jint, void*);

@@ -50,7 +50,7 @@ enum Seal_PresetFlags : uint16_t {
 struct Seal_ObjectPreset {
 public:
     Seal_ObjectPreset() :
-        _preset(PF_None), flags(0), position({0, 0, 0}), scale({1,1,1,}), rotation({1,0,0,0}),
+        _preset(PF_None), flags(0), position({0, 0, 0}), scale({1,1,1}), rotation({1,0,0,0}),
         color(SEAL_WHITE.rgba),
         material(SEAL_NO_MATERIAL), texture(SEAL_NO_TEXTURE), mesh(SEAL_NO_MESH) {}
 private:

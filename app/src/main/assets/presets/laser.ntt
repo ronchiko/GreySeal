@@ -1,0 +1,8 @@
+
+
+flags 0x4
+
+scale v3 0.1 0.1 0.1
+
+model path "models/laser.obj"
+color rgb 1 0 0

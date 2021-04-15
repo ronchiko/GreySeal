@@ -2,7 +2,7 @@ package com.roncho.greyseal.engine;
 
 import java.nio.ByteBuffer;
 
-public class Vector3 {
+public final class Vector3 {
 
     public static final int SIZE_IN_BYTES = 12;
 

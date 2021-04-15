@@ -1,5 +1,7 @@
 package com.roncho.greyseal.engine;
 
+import java.net.PortUnreachableException;
+
 public class SealMath {
 
     public static final float Pi = 3.14159f;
@@ -31,10 +33,32 @@ public class SealMath {
         return x;
     }
 
+    public static float lerp(float a, float b, float t){
+        return (1-t) * a + t * b;
+    }
+
+    public static float moveTowards(float a, float b, float t, float max){
+        return a + clamp((b - a) * t, -max, max);
+    }
+
     public static float sin(float x){
         return (float)Math.sin(x);
     }
     public static float cos(float x){
         return (float)Math.cos(x);
+    }
+
+    public static float random(float min, float max){
+        return (float) (Math.random() * (max - min) + min);
+    }
+
+    /** Integer square root */
+    public static int isqrt(int x){
+        int j = 3;
+        while(x > 0){
+            x -= j;
+            j += 2;
+        }
+        return (j - 3) >> 1;
     }
 }

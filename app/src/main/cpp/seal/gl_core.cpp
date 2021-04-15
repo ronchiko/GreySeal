@@ -13,6 +13,7 @@
 #include "greyseal/matrix.h"
 #include "greyseal/calls.h"
 #include "greyseal/preset.h"
+#include "greyseal/ui.h"
 
 int Seal_Specs::width = 0;
 int Seal_Specs::height = 0;
@@ -33,7 +34,7 @@ int Seal_GlStart(int width, int height){
     scene = new Seal_Scene();
     scene->camera().transform.rotation = Seal_Quaternion::euler(351.f, 0, 0);
     Seal_Log("Loading textures...");
-    defaultTextureId = Seal_LoadTexture("textures/white");
+    defaultTextureId = Seal_LoadWhiteTexture();
     // Initialize player
     return SEAL_SUCCESS;
 }
@@ -115,11 +116,10 @@ void Seal_Render(Seal_Byte* updatedBytes, Seal_Byte* calls, size_t callArrayLeng
     memcpy(scene->start, updatedBytes, scene->bytes());
     Seal_ExecuteEngineCalls(calls, callArrayLength);
 
-    scene->camera().transform.rotation = scene->camera().transform.rotation * Seal_Quaternion::euler(0, 0.3f, 0);
-
     if(scene) {
         scene->cleanse();
         scene->render();
+        Seal_DrawUI();
         Seal_LateInitialize();
     }
 }

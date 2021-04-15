@@ -8,7 +8,7 @@ import android.view.View;
 
 import com.roncho.greyseal.engine.SealLog;
 
-public class SealSurfaceView extends GLSurfaceView {
+public final class SealSurfaceView extends GLSurfaceView {
 
     private final SealRenderer renderer;
 

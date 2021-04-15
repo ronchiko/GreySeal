@@ -5,11 +5,19 @@
 
 constexpr float OneOver255 = 1 / 255.0f;
 
-struct Seal_Color {
+union Seal_Color {
     int rgba;
+    struct {
+        Seal_Byte r, g, b, a;
+    };
 
     Seal_Color() : Seal_Color(SEAL_COLOR_MIN, SEAL_COLOR_MIN, SEAL_COLOR_MIN, SEAL_COLOR_MAX) {}
     Seal_Color(Seal_Byte r, Seal_Byte  g, Seal_Byte  b, Seal_Byte a) : rgba(r << 24 | g << 16 | b << 8 | a) {}
+
+    static Seal_Color fromInt(int x) {
+        Seal_Color c; c.rgba = x;
+        return c;
+    }
 };
 
 inline Seal_Color Seal_RGBA(float r, float g, float b, float a) { return Seal_Color(r, g, b, a); }

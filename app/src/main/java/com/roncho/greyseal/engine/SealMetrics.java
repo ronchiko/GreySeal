@@ -4,7 +4,7 @@ import android.util.DisplayMetrics;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-public class SealMetrics {
+public final class SealMetrics {
 
     private static int screenWidth, screenHeight, densityDpi;
     private static float xdpi, ydpi, density;
@@ -27,4 +27,7 @@ public class SealMetrics {
     public static float getXdpi() { return xdpi; }
     public static float getYdpi() { return ydpi; }
     public static float getDensity() { return density; }
+
+    public static float percentageY(float y){ return y / screenHeight; }
+    public static float percentageX(float x){ return x / screenWidth ; }
 }

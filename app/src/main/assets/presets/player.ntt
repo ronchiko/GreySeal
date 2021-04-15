@@ -1,0 +1,9 @@
+
+position v3 0 0 1
+rotation euler 0 270 0
+scale v3 0.2 0.2 0.2
+
+flags 0x1
+model path "models/spaceship.obj"
+texture path "textures/spaceship-uvl.png"
+material shader "vertex.glsl" "fragment.glsl"

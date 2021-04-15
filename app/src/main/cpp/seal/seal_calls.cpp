@@ -3,6 +3,8 @@
 #include "greyseal/gl.h"
 #include "greyseal/scene.h"
 #include "greyseal/preset.h"
+#include "greyseal/ui.h"
+#include "greyseal/font.h"
 
 #include "jseal.h"
 
@@ -82,7 +84,9 @@ INST(LoadTexture){
 
     READ(stream.readString(&name), "Expected a string.");
 
+    Seal_Log("Preloading texture '%s'", name);
     Seal_Texture texture = Seal_LoadTexture(name);
+    Seal_Log("Preloaded texture '%s'", name);
     jclass jcls = Seal_JNIEnv()->FindClass("com/roncho/greyseal/engine/android/cpp/SealLinkedCache");
     jstring str = Seal_JNIEnv()->NewStringUTF(name);
     Java_com_roncho_greyseal_engine_android_cpp_SealLinkedCache_addTexture(Seal_JNIEnv(), jcls, str, texture);
@@ -126,6 +130,61 @@ INST(For){
     return SEAL_SUCCESS;
 }
 
+INST(NewUIO){
+    Seal_Int index;
+    READ(stream.readInt(&index), "Expected an int");
+    Seal_AddUIO(index);
+    return SEAL_SUCCESS;
+}
+
+INST(UIOPropI){
+    Seal_Int index, propId, value;
+    READ(stream.readInt(&index), "Expected an int");
+    READ(stream.readInt(&propId), "Expected an int");
+    READ(stream.readInt(&value), "Expected an int");
+
+    Seal_SetUIOProp(index, propId, value);
+    return SEAL_SUCCESS;
+}
+
+INST(UIOPropF){
+    Seal_Int index, propId;
+    Seal_Float value;
+    READ(stream.readInt(&index), "Expected an int");
+    READ(stream.readInt(&propId), "Expected an int");
+    READ(stream.readFloat(&value), "Expected a float");
+
+    Seal_SetUIOProp(index, propId, value);
+    return SEAL_SUCCESS;
+}
+
+INST(UIOPropS){
+    Seal_Int index, propId;
+    Seal_C_String value;
+    READ(stream.readInt(&index), "Expected an int");
+    READ(stream.readInt(&propId), "Expected an int");
+    READ(stream.readString(&value), "Expected a string");
+
+    Seal_SetUIOProp(index, propId, value);
+    return SEAL_SUCCESS;
+}
+
+INST(UIOSetVMode){
+    Seal_Int index, vmode;
+    READ(stream.readInt(&index), "Expected an int");
+    READ(stream.readInt(&vmode), "Expected an int");
+
+    Seal_SetUIOVMode(index, vmode);
+    return SEAL_SUCCESS;
+}
+
+INST(DelUIO){
+    Seal_Int index;
+    READ(stream.readInt(&index), "Expected an int");
+    Seal_DeleteUIO(index);
+    return SEAL_SUCCESS;
+}
+
 static _Seal_Instruction instructions[] = {
        &SealInst_Nop,
        &SealInst_Instatiate0,
@@ -139,6 +198,13 @@ static _Seal_Instruction instructions[] = {
        NULL,
        NULL,
        NULL,
+       &SealInst_NewUIO,
+       &SealInst_UIOPropI,
+       &SealInst_UIOPropF,
+       &SealInst_UIOPropS,
+       &SealInst_UIOSetVMode,
+       &SealInst_DelUIO,
+       NULL
 };
 
 #define SEAL_FAILURE_FATAL -2
@@ -150,7 +216,7 @@ static int Seal_StreamDoCommand(Seal_ByteStream& stream){
         Seal_LogError("Failed to read opcode from instructions.");
         return SEAL_FAILURE_FATAL;
     }
-    Seal_Log("Reading instuction: 0x%X", opcode);
+    //Seal_Log("Reading instuction: 0x%X", opcode);
 
     // Check if we got an illegal opcode
     if(SEAL_INST_NOP > opcode || opcode >= __SEAL_OPCODE_MAX__){
@@ -163,7 +229,7 @@ static int Seal_StreamDoCommand(Seal_ByteStream& stream){
         Seal_LogError("Error executing instruction 0x%X: %s.", opcode, errorMsg.c_str());
         return SEAL_FAILURE;
     }
-    Seal_Log("Executed instuction: 0x%X", opcode);
+    //Seal_Log("Executed instuction: 0x%X", opcode);
     return SEAL_SUCCESS;
 }
 

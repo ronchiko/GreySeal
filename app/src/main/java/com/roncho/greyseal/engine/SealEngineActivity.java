@@ -18,6 +18,41 @@ public abstract class SealEngineActivity extends AppCompatActivity {
         System.loadLibrary("greyseal-core");
     }
 
+    protected static class InitialCameraState {
+        private final float[] transform;
+
+        private InitialCameraState(){
+            transform = new float[7];
+            rotation(Quaternion.euler(0, 0, 0));
+            position(0, 0, 0);
+        }
+
+        public void rotationEuler(float x, float y, float z){
+            Quaternion q = Quaternion.euler(x, y, z);
+            rotation(q);
+        }
+
+        public void rotation(float w, float x, float y, float z){
+            transform[3] = w;
+            transform[4] = x;
+            transform[5] = y;
+            transform[6] = z;
+        }
+
+        public void rotation(Quaternion q){
+            transform[3] = q.w;
+            transform[4] = q.x;
+            transform[5] = q.y;
+            transform[6] = q.z;
+        }
+
+        public void position(float x, float y, float z){
+            transform[0] = x;
+            transform[1] = y;
+            transform[2] = z;
+        }
+    }
+
     private SealSurfaceView surface;
 
     @Override
@@ -28,9 +63,9 @@ public abstract class SealEngineActivity extends AppCompatActivity {
         SealTexturePipeline.init(getAssets());
         SealSystemManager.newManager();
         SealMetrics.reload(this);
-
-        loadResources();
-
+        InitialCameraState cameraState = new InitialCameraState();
+        loadResources(cameraState);
+        preloadCamera(cameraState.transform);
         setContentView(surface);
     }
 
@@ -52,8 +87,9 @@ public abstract class SealEngineActivity extends AppCompatActivity {
         stopEngine();
     }
 
-    public abstract void loadResources();
+    public abstract void loadResources(InitialCameraState state);
 
     private native static void startEngine(AssetManager manager);
     private native static void stopEngine();
+    private native static void preloadCamera(float[] camera);
 }

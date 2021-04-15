@@ -1,9 +1,9 @@
 
 position v3 0 0 1
 rotation qt 1 0 0 0
-scale v3 0.3 0.3 0.3
+scale v3 0.1 0.1 0.1
 
-flags 0x2
-model path "models/land.obj"
-color rgb 0 255 0
+flags 0x0
+model path "models/cube-nuv.obj"
+texture path "textures/seal.jpg"
 material shader "vertex.glsl" "fragment.glsl"

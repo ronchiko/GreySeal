@@ -2,7 +2,7 @@ package com.roncho.greyseal.engine.android.cpp;
 
 import java.util.HashMap;
 
-public class SealLinkedCache {
+public final class SealLinkedCache {
     private static HashMap<String, Integer> textures, meshes, materials;
 
     static {

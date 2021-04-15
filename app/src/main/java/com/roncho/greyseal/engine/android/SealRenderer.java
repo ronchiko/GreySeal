@@ -1,20 +1,15 @@
 package com.roncho.greyseal.engine.android;
 
 import android.opengl.GLSurfaceView;
-import android.opengl.Matrix;
-import android.util.Log;
 
-import com.roncho.greyseal.engine.SealCamera;
-import com.roncho.greyseal.engine.SealEngine;
-import com.roncho.greyseal.engine.SealLog;
-import com.roncho.greyseal.engine.android.cpp.SealLinkedCache;
+import com.roncho.greyseal.engine.Time;
 import com.roncho.greyseal.engine.systems.SealSystemManager;
-import com.roncho.greyseal.engine.systems.stream.SealObjectStream;
+import com.roncho.greyseal.engine.systems.stream.EntityStream;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-public class SealRenderer implements GLSurfaceView.Renderer {
+public final class SealRenderer implements GLSurfaceView.Renderer {
 
     private static native void init(int width, int height, byte[] array);
     private static native void step(byte[] updatedData, byte[] engineCommands);
@@ -32,12 +27,13 @@ public class SealRenderer implements GLSurfaceView.Renderer {
     @Override
     public void onSurfaceChanged(GL10 gl10, int w, int h) {
         init(w, h, SealSystemManager.getEngineCalls());
+        Time.start();
     }
 
     @Override
     public void onDrawFrame(GL10 gl10) {
-        // getSealObjects();
-        SealObjectStream stream = new SealObjectStream(requestEngineData());
+        Time.nextFrame();
+        EntityStream stream = new EntityStream(requestEngineData());
 
         SealSystemManager.runSystems(stream);
         byte[] instructions = SealSystemManager.getEngineCalls();

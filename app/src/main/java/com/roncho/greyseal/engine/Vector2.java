@@ -1,6 +1,6 @@
 package com.roncho.greyseal.engine;
 
-public class Vector2 {
+public final class Vector2 {
     public float x, y;
 
     public Vector2(float x, float y){

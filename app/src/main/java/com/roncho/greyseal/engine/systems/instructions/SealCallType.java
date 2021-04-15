@@ -13,7 +13,13 @@ public enum SealCallType {
     CLONE_1(9),              // CLN oid
     CLONE_2(10),             // CLN oid v3 qt v3
     CLONE_3(11),
-    CAMERA(12);             // CLN oid v3
+    UIO_New(12),             // UIO.New int
+    UIO_Set_I(13),           // UIO.Set int int int
+    UIO_Set_F(14),           // UIO.Set int int float
+    UIO_Set_S(15),           // UIO.Set int int str
+    UIO_Set_VM(16),          // UIO.VM int int
+    UIO_Del(17),             // UIO.Del int
+    LOAD_FONT(18);           // LDF str
 
 
     private final byte code;

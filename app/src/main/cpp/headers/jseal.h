@@ -10,6 +10,7 @@
  */
 
 #define JNI_FNC(ret) JNIEXPORT ret JNICALL
+#define Java_Link(link) Java_com_roncho_greyseal_engine_##link
 
 JNIEnv* Seal_JNIEnv(void);
 

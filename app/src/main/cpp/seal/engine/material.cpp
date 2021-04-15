@@ -31,8 +31,8 @@ Seal_MaterialHandle Seal_LoadMaterial(const Seal_String& vertex, const Seal_Stri
         material->program = program;
 
         material->vertexHandle = glGetAttribLocation(program, "vertex");
-        material->uvHandle = glGetAttribLocation(program, "uv");
-        material->normalHandle = glGetAttribLocation(program, "normal");
+        material->uvHandle = glGetAttribLocation(program, "_uv");
+        material->normalHandle = glGetAttribLocation(program, "_normal");
 
         material->tintHandle = glGetUniformLocation(program, "tint");
         material->textureHandle = glGetUniformLocation(program, "texture");

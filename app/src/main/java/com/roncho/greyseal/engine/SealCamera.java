@@ -1,10 +1,10 @@
 package com.roncho.greyseal.engine;
 
-import com.roncho.greyseal.engine.systems.stream.SealEntity;
+import com.roncho.greyseal.engine.systems.stream.Entity;
 
-public class SealCamera {
+public final class SealCamera {
 
-    public static SealEntity current;
+    public static Entity current;
 
     public Vector3 position() { return current.position; }
     public void position(Vector3 v3) { current.position = v3; }

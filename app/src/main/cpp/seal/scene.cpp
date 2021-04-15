@@ -38,21 +38,25 @@ void Seal_Scene::push(Seal_Entity *entities, int _count) {
     start = (Seal_ObjectUnion*)realloc(start, (_count + count) * sizeof(Seal_ObjectUnion));
     for(int i = 0; i < _count; i++){
         start[count + i] = Seal_ObjectUnion(&entities[i]);
+        //Seal_Log("Entity: %d %d %f", i, count + i, entities[i].transform.position.x);
     }
     count += _count;
+    //Seal_Log("Count: %d, Added: %d", count, _count);
 }
 
 void Seal_Scene::cleanse(void){
     // Batch groups of deleted object and override them with the minimum amount of moves
     int newCount = count;
+    int removeCount = 0;
     for(int i = count - 1; i >= 1; i--){
-        if(start[i]->flags & SEAL_ENGINE_DESTROY){
+        if(start[i]->engineFlags & SEAL_ENGINE_DESTROY){
             int batchStart = i;
-            while(i >= 1 && start[i]->flags & SEAL_ENGINE_DESTROY){
+            while(i >= 1 && start[i]->engineFlags & SEAL_ENGINE_DESTROY){
                 i--;
             }
             memmove(start + i + 1, start + batchStart + 1, (newCount - batchStart) * sizeof(Seal_ObjectUnion));
             newCount -= (batchStart - i);
+            removeCount += (batchStart - i);
         }
     }
 
@@ -73,8 +77,9 @@ void Seal_Scene::render(void) const {
     Seal_MatrixPerspective(projection, 60, Seal_Specs::ratio(), 0.01f, 100.f);
     Seal_MatrixMul(view, projection, view);
 
+    //Seal_Log("Rendering object %d", count);
     for(int i = 1; i < count; i++)
-        Seal_RenderObject(&(start + i)->object, this, identity, view);
+        Seal_RenderObject(&(start[i].object), this, identity, view);
 
 }
 
@@ -139,5 +144,19 @@ void Seal_RenderObject(Seal_Entity* object, const Seal_Scene* scene, float* pare
         glDisableVertexAttribArray(material->normalHandle);
 
         glBindTexture(GL_TEXTURE_2D, SEAL_NO_TEXTURE);
+    }
+}
+
+void Seal_SetCamera(float* transformVector){
+    Seal_Scene* scene = Seal_CurrentScene();
+    if(scene){
+        scene->camera().transform.position = *(Seal_Vector3*)transformVector;
+        scene->camera().transform.rotation = Seal_Quaternion(transformVector[3], transformVector[4],
+                transformVector[5], transformVector[6]);
+
+//        Seal_Log("Camera: %f %f %f : %f %f %f %f", scene->camera().transform.position.x,
+//                 scene->camera().transform.position.y, scene->camera().transform.position.z,
+//                 scene->camera().transform.rotation.w, scene->camera().transform.rotation.x,
+//                 scene->camera().transform.rotation.y, scene->camera().transform.rotation.z);
     }
 }

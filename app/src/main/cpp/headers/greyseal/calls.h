@@ -46,6 +46,15 @@ typedef enum _Seal_CallType_e : Seal_Byte {
     SEAL_INST_CLONE_2,              // CLN oid v3 qt v3
     SEAL_INST_CLONE_3,              // CLN oid v3
 
+    SEAL_UIO_NEW,
+    SEAL_UIO_SET_PROP_I,
+    SEAL_UIO_SET_PROP_F,
+    SEAL_UIO_SET_PROP_S,
+    SEAL_UIO_V_MODE,
+    SEAL_UIO_DESTROY,
+
+    SEAL_INST_LOAD_FONT,            // LDF str
+
     __SEAL_OPCODE_MAX__
 } Seal_EngineCallType;
 

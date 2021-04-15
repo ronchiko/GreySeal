@@ -1,10 +1,11 @@
 package com.roncho.greyseal.engine.systems.instructions;
 
+import com.roncho.greyseal.engine.SealLog;
 import com.roncho.greyseal.engine.android.cpp.SealCppHandler;
 
 import java.nio.ByteBuffer;
 
-public class SealCallsList {
+public final class SealCallsList {
 
     private static class SealCallNode {
         private SealCallType type;

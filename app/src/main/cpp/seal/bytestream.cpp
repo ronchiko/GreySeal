@@ -1,14 +1,17 @@
 
+#include <cstdint>
+
 #include "greyseal/calls.h"
 
 #define READ_FUNC(name, cast) \
 	int Seal_ByteStream::name(cast* value){ \
-		Seal_Byte* buf = advance(sizeof(cast));			\
+	    size_t size = sizeof(cast);           \
+		Seal_Byte* buf = advance(size);			\
 		if(buf){\
-			memcpy(value, buf, sizeof(cast));\
-			return SEAL_SUCCESS;	\
+			memcpy(value, buf, size);       \
+			return SEAL_SUCCESS;	        \
 		}				\
-		return SEAL_FAILURE;		\
+		return SEAL_FAILURE;		        \
 	}
 
 Seal_ByteStream::Seal_ByteStream(Seal_Byte* buffer, size_t length)

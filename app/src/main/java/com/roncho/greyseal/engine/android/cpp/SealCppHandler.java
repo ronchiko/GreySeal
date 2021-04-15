@@ -3,7 +3,7 @@ package com.roncho.greyseal.engine.android.cpp;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-public class SealCppHandler {
+public final class SealCppHandler {
 
     private final static ByteOrder cppByteOrder = testByteOrder();
     private final static ByteOrder nativeByteOrder = ByteOrder.nativeOrder();

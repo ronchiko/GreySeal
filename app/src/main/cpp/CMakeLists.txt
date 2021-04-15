@@ -46,6 +46,9 @@ add_library( # Sets the name of the library.
 
         seal/engine/initialize.cpp
 
+        seal/engine/font.cpp
+        seal/engine/uio.cpp
+
         native-lib.cpp )
 
 # Searches for a specified prebuilt library and stores the path as a

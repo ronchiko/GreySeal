@@ -1,0 +1,8 @@
+
+flags 0x2
+
+scale v3 0.2 0.2 0.2
+
+model path "models/ufo.obj"
+texture path "textures/ufo-uvl.png"
+material shader "vertex.glsl" "fragment.glsl"

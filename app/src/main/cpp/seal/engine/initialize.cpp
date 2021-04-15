@@ -22,9 +22,7 @@ public:
     inline int size(void) { return count; }
 
     inline void clear(void){
-        free(queue);
-        used = count = 0;
-        queue = nullptr;
+        count = 0;
     }
 private:
     int count = 0, used = 0;
@@ -36,9 +34,11 @@ Seal_Entity& Seal_QueueLateEntity(void){
 }
 
 void Seal_LateInitialize(void){
-    Seal_Scene* scene = Seal_CurrentScene();
-    scene->push(queue.data(), queue.size());
-    queue.clear();
+    if(queue.size() > 0) {
+        Seal_Scene *scene = Seal_CurrentScene();
+        scene->push(queue.data(), queue.size());
+        queue.clear();
+    }
 }
 
 

@@ -1,16 +1,17 @@
 package com.roncho.greyseal.engine;
 
+import com.roncho.greyseal.engine.android.SealTexturePipeline;
 import com.roncho.greyseal.engine.android.cpp.SealCppHandler;
 import com.roncho.greyseal.engine.systems.SealSystemManager;
 import com.roncho.greyseal.engine.systems.instructions.SealCallType;
 import com.roncho.greyseal.engine.systems.stream.SealEngineFlags;
-import com.roncho.greyseal.engine.systems.stream.SealEntity;
+import com.roncho.greyseal.engine.systems.stream.Entity;
 
 import java.nio.ByteBuffer;
 
 public class SealEngine {
 
-    public static void destroy(SealEntity e){
+    public static void destroy(Entity e){
           e.activate(SealEngineFlags.DESTROY);
     }
 
@@ -24,6 +25,10 @@ public class SealEngine {
         ByteBuffer bb = SealCppHandler.allocateJava(path.length() + 1);
         SealCppHandler.putString(bb, path);
         SealSystemManager.queue(SealCallType.LOAD_MESH, bb);
+    }
+
+    public static void loadFont(String path){
+        SealTexturePipeline.loadFont(path, 24);
     }
 
     public static void loadMaterial(String vertex, String fragment){

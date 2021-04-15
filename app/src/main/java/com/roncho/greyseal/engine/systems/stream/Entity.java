@@ -6,7 +6,7 @@ import com.roncho.greyseal.engine.android.cpp.SealCppHandler;
 
 import java.nio.ByteBuffer;
 
-public class SealEntity {
+public final class Entity {
 
     private static native int getObjectPayloadSize();
 
@@ -36,10 +36,10 @@ public class SealEntity {
     public Vector3 scale;
     public int color, material, texture, mesh;
 
-    public SealEntity(byte[] array, int start){
+    public Entity(byte[] array, int start){
         this.start = start;
 
-        ByteBuffer bb = SealCppHandler.allocateJava(array, start, SealObjectStream.SIZEOF_OBJECT);
+        ByteBuffer bb = SealCppHandler.allocateJava(array, start, EntityStream.SIZEOF_OBJECT);
 
         userFlags = bb.getInt();
         engineFlags = bb.getShort();
@@ -56,7 +56,7 @@ public class SealEntity {
     }
 
     public void write(byte[] buffer){
-        ByteBuffer bb = SealCppHandler.allocateJava(SealObjectStream.SIZEOF_OBJECT);
+        ByteBuffer bb = SealCppHandler.allocateJava(EntityStream.SIZEOF_OBJECT);
         bb.position(0);
 
         bb.putInt(userFlags);
@@ -68,11 +68,11 @@ public class SealEntity {
         scale.writeToBuffer(bb);
 
         bb.putInt(color).putInt(material).putInt(texture).putInt(mesh);
-        SealCppHandler.projectCpp(buffer, bb, start, SealObjectStream.SIZEOF_OBJECT);
+        SealCppHandler.projectCpp(buffer, bb, start, EntityStream.SIZEOF_OBJECT);
     }
 
     public short localIndex(){
-        return (short)(start / SealObjectStream.SIZEOF_OBJECT);
+        return (short)(start / EntityStream.SIZEOF_OBJECT);
     }
 
     public boolean check(SealEngineFlags flag) { return (engineFlags & flag.value) != 0; }

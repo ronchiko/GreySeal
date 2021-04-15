@@ -30,49 +30,86 @@ int Seal_InitTexturePipeline(JNIEnv* env){
 Seal_Texture Seal_LoadTexture(const Seal_String& path){
     if(textures.find(path) == textures.end()) {
         // The the texture isn't loaded, load it
-        int glId = Seal_JNIEnv()->CallStaticIntMethod(texturePipelineJClass, textureLoadMethod,
-                                                   Seal_JNIEnv()->NewStringUTF(path.c_str()));
+        Seal_Log("Preloaders: %s", path.c_str());
 
+        texturePipelineJClass = Seal_JNIEnv()->FindClass("com/roncho/greyseal/engine/android/SealTexturePipeline");
+        Seal_Log("Finding methods...");
+        textureLoadMethod = Seal_JNIEnv()->GetStaticMethodID(texturePipelineJClass, "load", "(Ljava/lang/String;)I");
+        Seal_Log("Making jpath");
+        jstring jpath = Seal_JNIEnv()->NewStringUTF(path.c_str());
+        Seal_Log("Making some ids... %p->CallStaticIntMethod(%p,%p,%p)", Seal_JNIEnv(), texturePipelineJClass, textureLoadMethod, jpath);
+        int glId = Seal_JNIEnv()->CallStaticIntMethod(texturePipelineJClass, textureLoadMethod,
+                                                   jpath);
+        Seal_Log("Caching");
         textures[path] = (Seal_Texture) glId;
         return (Seal_Texture)glId;
     }
     return textures[path];
 }
 
+int Seal_LoadTextureFromJava(JNIEnv* env, jbyteArray a, jint width, jint height, void* imageArray){
+    union {
+        int8_t* array0;
+        uint32_t* array1;
+    } textureArray, buffer;
+
+    // Transfer the array into a c++ array
+    size_t arrayLength = env->GetArrayLength(a);
+    textureArray.array0 = env->GetByteArrayElements(a, JNI_FALSE);
+
+    // First we need to reverse the the array
+    buffer.array0 = new int8_t[arrayLength];
+    size_t floatArrayLength = arrayLength / 4;
+
+    // We must invert the X component of the image for the uvs to mapped correctly
+    for(int i = 0; i < floatArrayLength; i++)
+        buffer.array1[i] = textureArray.array1[I_FX(i, width, height)];
+
+    // Now we can do the GL stuff
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    GLuint textureId;
+    glGenTextures(1, &textureId);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, textureId);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer.array0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    if(imageArray){
+        memcpy(imageArray, buffer.array0, arrayLength);
+    }
+
+    // Free buffer
+    delete[] buffer.array0;
+    return textureId;
+}
+
+Seal_Texture Seal_LoadWhiteTexture(void){
+    GLuint tid;
+    glEnable(GL_TEXTURE);
+
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glGenTextures(1, &tid);
+
+    Seal_Byte _white[4] = {255, 255, 255, 255};
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, tid);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, _white);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    textures["textures/white"] = (Seal_Texture)tid;
+
+    return tid;
+}
+
 extern "C" {
     JNIEXPORT jint JNICALL Java_com_roncho_greyseal_engine_android_SealTexturePipeline_registerBmp(JNIEnv* env, jclass, jbyteArray a, jint width, jint height){
-        union {
-            int8_t* array0;
-            uint32_t* array1;
-        } textureArray, buffer;
-
-        // Transfer the array into a c++ array
-        size_t arrayLength = env->GetArrayLength(a);
-        textureArray.array0 = env->GetByteArrayElements(a, JNI_FALSE);
-
-        // First we need to reverse the the array
-        buffer.array0 = new int8_t[arrayLength];
-        size_t floatArrayLength = arrayLength / 4;
-
-        // We must invert the X component of the image for the uvs to mapped correctly
-        for(int i = 0; i < floatArrayLength; i++)
-            buffer.array1[i] = textureArray.array1[I_FX(i, width, height)];
-
-        // Now we can do the GL stuff
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-        GLuint textureId;
-        glGenTextures(1, &textureId);
-
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, textureId);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer.array0);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-        // Free buffer
-        delete[] buffer.array0;
-        return textureId;
+       return Seal_LoadTextureFromJava(env, a, width, height, nullptr);
     }
 }
 

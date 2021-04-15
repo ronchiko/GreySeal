@@ -1,20 +1,21 @@
 package com.roncho.greyseal.engine.systems;
 
 import com.roncho.greyseal.engine.SealCamera;
-import com.roncho.greyseal.engine.SealLog;
 import com.roncho.greyseal.engine.systems.instructions.SealCallType;
 import com.roncho.greyseal.engine.systems.instructions.SealCallsList;
 import com.roncho.greyseal.engine.systems.stream.SealEngineFlags;
-import com.roncho.greyseal.engine.systems.stream.SealEntity;
-import com.roncho.greyseal.engine.systems.stream.SealObjectStream;
+import com.roncho.greyseal.engine.systems.stream.Entity;
+import com.roncho.greyseal.engine.systems.stream.EntityStream;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 
-public class SealSystemManager {
+public final class SealSystemManager {
 
-    private SealCallsList engineCalls;
+    private final SealCallsList engineCalls;
     private final ArrayList<SealSystem> systems;
+    private final HashMap<String, SealSignalHandler> signals;
     private static SealSystemManager instance;
 
     public static void newManager(){
@@ -23,6 +24,7 @@ public class SealSystemManager {
 
     public SealSystemManager(){
         systems = new ArrayList<>();
+        signals = new HashMap<>();
         engineCalls = new SealCallsList();
     }
 
@@ -32,13 +34,13 @@ public class SealSystemManager {
     public static void queue(SealCallType type, ByteBuffer bb){
         instance.engineCalls.queueCall(type, bb);
     }
-    public static void runSystems(SealObjectStream stream){
+    public static void runSystems(EntityStream stream){
         instance.engineCalls.reset();
         SealCamera.current = stream.next();
         for (SealSystem system : instance.systems) system.updateOnce();
 
         while(stream.hasNext()) {
-            SealEntity entity = stream.next();
+            Entity entity = stream.next();
 
             for (SealSystem system : instance.systems) {
                 // Do a system select here
@@ -57,5 +59,15 @@ public class SealSystemManager {
     }
     public static byte[] getEngineCalls(){
         return instance.engineCalls.compile();
+    }
+    public static void registerSignal(String name, SealSignalHandler signalHandler){
+        if(instance != null)
+            instance.signals.put(name, signalHandler);
+    }
+    public static void invoke(String name, Entity e, Object... params){
+        SealSignalHandler signal = instance.signals.get(name);
+        if(signal != null){
+            signal.handleSignal(e,  params);
+        }
     }
 }
