@@ -15,7 +15,7 @@ extern Seal_Texture defaultTextureId;
 /**
  * \brief start OpenGL ES 2.0
  */
-int Seal_GlStart(int width, int height);
+int Seal_GlStart();
 /**
  * \brief Ends the engine, and also frees all the allocated memory
  */

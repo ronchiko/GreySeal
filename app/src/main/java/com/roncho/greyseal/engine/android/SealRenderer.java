@@ -11,8 +11,11 @@ import javax.microedition.khronos.opengles.GL10;
 
 public final class SealRenderer implements GLSurfaceView.Renderer {
 
-    private static native void init(int width, int height, byte[] array);
+    private static boolean initiatedEngine = false;
+
+    private static native void init();
     private static native void step(byte[] updatedData, byte[] engineCommands);
+    private static native void updateSpecs(int w, int h, byte[] cmds);
     private static native byte[] requestEngineData();
 
     public SealRenderer(){
@@ -21,13 +24,16 @@ public final class SealRenderer implements GLSurfaceView.Renderer {
 
     @Override
     public void onSurfaceCreated(GL10 gl10, EGLConfig eglConfig) {
-
+        if(!initiatedEngine) {
+            init();
+            Time.start();
+            initiatedEngine = true;
+        }
     }
 
     @Override
     public void onSurfaceChanged(GL10 gl10, int w, int h) {
-        init(w, h, SealSystemManager.getEngineCalls());
-        Time.start();
+        updateSpecs(w, h, SealSystemManager.getEngineCalls());
     }
 
     @Override

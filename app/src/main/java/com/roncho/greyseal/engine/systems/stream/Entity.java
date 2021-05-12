@@ -36,8 +36,11 @@ public final class Entity {
     public Vector3 scale;
     public int color, material, texture, mesh;
 
+    private final byte[] array;
+
     public Entity(byte[] array, int start){
         this.start = start;
+        this.array = array;
 
         ByteBuffer bb = SealCppHandler.allocateJava(array, start, EntityStream.SIZEOF_OBJECT);
 
@@ -78,4 +81,8 @@ public final class Entity {
     public boolean check(SealEngineFlags flag) { return (engineFlags & flag.value) != 0; }
     public void activate(SealEngineFlags flag) { engineFlags |= flag.value; }
     public void deactivate(SealEngineFlags flag) { engineFlags &= flag.mask; }
+
+    public void apply(){
+        write(array);
+    }
 }

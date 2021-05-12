@@ -35,6 +35,7 @@ Seal_Entity& Seal_QueueLateEntity(void){
 
 void Seal_LateInitialize(void){
     if(queue.size() > 0) {
+        Seal_Log("Adding %d objects", queue.size());
         Seal_Scene *scene = Seal_CurrentScene();
         scene->push(queue.data(), queue.size());
         queue.clear();

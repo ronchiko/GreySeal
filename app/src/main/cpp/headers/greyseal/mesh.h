@@ -32,6 +32,7 @@ public:
     void intoAttributes(const GLint* vertex, const GLint* uv, const GLint* normal) const;
 
     inline int size() const { return vertexCount; }
+    inline const float* getVertecies() const { return vertecies; }
 private:
     int vertexCount;
     float* vertecies;

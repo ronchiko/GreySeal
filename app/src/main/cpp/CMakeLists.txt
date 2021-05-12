@@ -18,7 +18,6 @@ include_directories(
         headers
         ntt/include
 )
-
 add_library(seal-ntt SHARED ntt/ntt.c ntt/ntte.c ntt/nttnum.c)
 
 # link_directories(${CMAKE_BINARY_DIR}/cpp)
@@ -48,6 +47,7 @@ add_library( # Sets the name of the library.
 
         seal/engine/font.cpp
         seal/engine/uio.cpp
+        seal/threading.cpp
 
         native-lib.cpp )
 

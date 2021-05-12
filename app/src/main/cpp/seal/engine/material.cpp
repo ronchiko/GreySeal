@@ -12,7 +12,18 @@ static std::unordered_map<Seal_String, Seal_MaterialHandle> loaded;
 static std::unordered_map<Seal_MaterialHandle, Seal_Material*> materials;
 static Seal_MaterialHandle materialIndex = 0;
 
-inline Seal_String Seal_MakeMaterialUid(const Seal_String& vertex, const Seal_String& fragment){
+GLint Seal_Material::find(const char *name) {
+    std::string _name = name;
+    if(handles.find(_name) == handles.end()){
+        glUseProgram(program);
+        GLint handle = glGetUniformLocation(program, name);
+        handles[_name] = handle;
+        return handle;
+    }
+    return handles[_name];
+}
+
+inline static Seal_String Seal_MakeMaterialUid(const Seal_String& vertex, const Seal_String& fragment){
     std::stringstream ss;
     ss << vertex << ";" << fragment << ";";
     return ss.str();

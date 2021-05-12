@@ -14,11 +14,29 @@
 
 JNIEnv* Seal_JNIEnv(void);
 
+struct JVM{
+public:
+    JVM(JNIEnv*);
+    ~JVM(){
+        jvm->DestroyJavaVM();
+    }
+
+    JNIEnv* attachToThread(void);
+    void detachFromThread(void);
+private:
+    JavaVM* jvm;
+    JNIEnv* env;
+};
+
 extern "C" {
-JNI_FNC(void) Java_com_roncho_greyseal_engine_android_cpp_SealLinkedCache_addTexture(JNIEnv* env, jclass cls, jstring str, jint index);
+//JNI_FNC(void) Java_com_roncho_greyseal_engine_android_cpp_SealLinkedCache_addTexture(JNIEnv* env, jclass cls, jstring str, jint index);
 JNI_FNC(void) Java_com_roncho_greyseal_engine_android_cpp_SealLinkedCache_addMesh(JNIEnv* env, jclass cls, jstring str, jint index);
 JNI_FNC(void) Java_com_roncho_greyseal_engine_android_cpp_SealLinkedCache_addMaterial(JNIEnv* env, jclass cls, jstring str, jint index);
 }
+
+JVM& Seal_GetJVM(void);
+void Seal_CreateJVM(JNIEnv*);
+void Seal_DestroyJVM(void);
 
 class Seal_JNIString {
 public:

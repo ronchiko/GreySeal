@@ -11,6 +11,13 @@ public final class SealCppHandler {
     private static ByteOrder testByteOrder(){
         return JNIGet1()[0] == 0x10 ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN;
     }
+    public static int flipBits(int a){
+        int c = 0;
+        for(int i = 0; i < 32; i++){
+            c |= ((a & (1 << i)) >> i) << (31 - i);
+        }
+        return c;
+    }
 
     /**
      * Takes a java.nio.ByteBuffer and sorts it to the C++ endianness and puts the result to an array

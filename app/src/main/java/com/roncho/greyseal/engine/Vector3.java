@@ -13,6 +13,9 @@ public final class Vector3 {
         this.y = y;
         this.z = z;
     }
+    public Vector3(Vector3 v3){
+        this(v3.x, v3.y, v3.z);
+    }
 
     public void writeToBuffer(ByteBuffer buffer){
         buffer.putFloat(x);
@@ -27,6 +30,17 @@ public final class Vector3 {
         v.z = buffer.getFloat();
         return v;
     }
+
+    public Vector3 add(Vector3 v){
+        return new Vector3(x + v.x, y + v.y, z + v.z);
+    }
+
+    public Vector3 sub(Vector3 v){
+        return new Vector3(x - v.x, y - v.y, z - v.z);
+    }
+
+    public Vector3 scale(float t){ return new Vector3(x * t, y * t, z * t);}
+    public Vector3 scale(Vector3 t){ return new Vector3(x * t.x, y * t.y, z * t.z);}
 
     @Override
     public String toString() {

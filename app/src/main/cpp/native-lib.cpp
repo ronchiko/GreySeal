@@ -21,12 +21,14 @@ static float cameraTransformArray[7];
 extern "C" {
     JNI_FNC(void) Java_com_roncho_greyseal_engine_SealEngineActivity_startEngine(JNIEnv* env, jclass, jobject assetManager){
         Seal_Log("Starting Engine");
+        Seal_CreateJVM(env);
         Seal_InitAssets(env, assetManager);
         Seal_Log("Engine Started");
     }
     JNI_FNC(void) Java_com_roncho_greyseal_engine_SealEngineActivity_stopEngine(JNIEnv* env, jclass){
         Seal_FreeMaterials();
         Seal_EndNttEnvironment();
+        Seal_DestroyJVM();
         Seal_GlEnd();
         Seal_Log("Closed engine");
     }
@@ -42,19 +44,25 @@ extern "C" {
         Seal_Log("Camera: %s", ss.str().c_str());
     }
 
-    JNI_FNC(void) Java_com_roncho_greyseal_engine_android_SealRenderer_init(JNIEnv* env, jclass, jint width, jint height, jbyteArray instr){
+    JNI_FNC(void) Java_com_roncho_greyseal_engine_android_SealRenderer_init(JNIEnv* env, jclass){
         Seal_Log("Starting open GL");
         if(!__SEAL_INITIALIZED) {
-            Seal_InitTexturePipeline(env);
+            Seal_NewThreadJNIEnv(env);
             Seal_SetupNttEnvironment();
-            Seal_GlStart(width, height);
-            Seal_Byte *sealCommands = (Seal_Byte *) env->GetByteArrayElements(instr, JNI_FALSE);
-            size_t length = env->GetArrayLength(instr);
-            Seal_ExecuteEngineCalls(sealCommands, length);
-            Seal_SetCamera(cameraTransformArray);
+            Seal_GlStart();
             __SEAL_INITIALIZED = true;
         }
         Seal_Log("Open GL started successfully");
+    }
+    JNI_FNC(void) Java_com_roncho_greyseal_engine_android_SealRenderer_updateSpecs(JNIEnv* env, jclass, jint w, jint h, jbyteArray instr){
+        Seal_Log("Redo WH");
+        Seal_Specs::width = w;
+        Seal_Specs::height = h;
+        Seal_Byte *sealCommands = (Seal_Byte *) env->GetByteArrayElements(instr, JNI_FALSE);
+        size_t length = env->GetArrayLength(instr);
+        Seal_ExecuteEngineCalls(sealCommands, length);
+        glViewport(0, 0, Seal_Specs::width, Seal_Specs::height);
+        Seal_SetCamera(cameraTransformArray);
     }
     JNI_FNC(void) Java_com_roncho_greyseal_engine_android_SealRenderer_step(JNIEnv* e, jclass, jbyteArray update, jbyteArray commands){
         if(__SEAL_INITIALIZED) {
@@ -88,31 +96,44 @@ extern "C" {
         return array;
     }
 
-    // TODO: When the engine is done, maybe take look and try to optimize with caching
-    JNI_FNC(void) Java_com_roncho_greyseal_engine_android_cpp_SealLinkedCache_addTexture(JNIEnv* env, jclass cls, jstring str, jint index){
-        jfieldID fid = env->GetStaticFieldID(cls, "textures", "Ljava/util/HashMap;");
-        jobject hashMap = env->GetStaticObjectField(cls, fid);
-        jclass cls_hashMap = env->GetObjectClass(hashMap);
-        jmethodID mid = env->GetMethodID(cls_hashMap, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
-
-        jclass cls_Int = env->FindClass("java/lang/Integer");
-        jmethodID mid_IntInit = env->GetMethodID(cls_Int, "<init>", "(I)V");
-        jobject o_index = env->NewObject(cls_Int, mid_IntInit, index);
-
-        env->CallObjectMethod(hashMap, mid, str, o_index);
-    }
-
     JNI_FNC(void) Java_com_roncho_greyseal_engine_android_cpp_SealLinkedCache_addMesh(JNIEnv* env, jclass cls, jstring str, jint index){
+        // Get the hash map property for the mesh cache
         jfieldID fid = env->GetStaticFieldID(cls, "meshes", "Ljava/util/HashMap;");
         jobject hashMap = env->GetStaticObjectField(cls, fid);
         jclass cls_hashMap = env->GetObjectClass(hashMap);
         jmethodID mid = env->GetMethodID(cls_hashMap, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
 
+        // Make an integer instance to pass to the cache
         jclass cls_Int = env->FindClass("java/lang/Integer");
         jmethodID mid_IntInit = env->GetMethodID(cls_Int, "<init>", "(I)V");
         jobject o_index = env->NewObject(cls_Int, mid_IntInit, index);
-
+        // Insert to the cache
         env->CallObjectMethod(hashMap, mid, str, o_index);
+
+        Seal_Mesh* mesh = Seal_GetMesh(index);
+        if(mesh && mesh->size() > 0){
+            // Pre-compute the AABB of this mesh
+            // AABB is calculated relative to the object's center by finding the minimum and maximum
+            // X, Y, Z values of the mesh.
+            const Seal_Vector3* vertecies = reinterpret_cast<const Seal_Vector3*>(mesh->getVertecies());
+            Seal_Vector3 min(vertecies->x, vertecies->y, vertecies->z), max(min.x, min.y, min.z);
+            for(int i = 1; i < mesh->size(); i++){
+                const Seal_Vector3& vertex = vertecies[i];
+                if(min.x > vertex.x) min.x = vertex.x;
+                if(min.y > vertex.y) min.y = vertex.y;
+                if(min.z > vertex.z) min.z = vertex.z;
+                if(max.x < vertex.x) max.x = vertex.x;
+                if(max.y < vertex.y) max.y = vertex.y;
+                if(max.z < vertex.z) max.z = vertex.z;
+            }
+            // The size of the AABB is the max vector - the min vector
+            Seal_Vector3 sizes = max - min;
+            // Register the AABB on the Java interface
+            jclass aabb = env->FindClass("com/roncho/greyseal/engine/physics/AABB");
+            jmethodID registerMethod = env->GetStaticMethodID(aabb, "registerMeshAABB", "(IFFFFFF)V");
+            env->CallStaticVoidMethod(aabb, registerMethod, index, min.x, min.y, min.z,
+                    sizes.x, sizes.y, sizes.z);
+        }
     }
 
     JNI_FNC(void) Java_com_roncho_greyseal_engine_android_cpp_SealLinkedCache_addMaterial(JNIEnv* env, jclass cls, jstring str, jint index){

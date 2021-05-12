@@ -3,67 +3,148 @@
 #include <GLES2/gl2.h>
 #include <unordered_map>
 
+#include "greyseal/threading.h"
 #include "greyseal/texture.h"
 #include "sealog.h"
 #include "jseal.h"
 
+#include "debug/clock.h"
+
 #define P2C(x, y, w) (x) + (w) * (y)
 // Reverse the y of a value
-#define I_FX(i, w, h) P2C((i) % (w), (h) - (i) / (w), w)
+#define I_FX(i, w, h) P2C((i) % (w), (h) - (i) / (w) - 1, w)
 
 static std::unordered_map<std::string, Seal_Texture> textures;
-static jmethodID textureLoadMethod;
-static jclass texturePipelineJClass;
+static Seal_Mutex jvmMutex;
 
-int Seal_InitTexturePipeline(JNIEnv* env){
-    Seal_Log("Initializing texture pipeline");
-    Seal_NewThreadJNIEnv(env);
+static Seal_Texture Seal_LoadTextureAndSync(const Seal_String& path, JNIEnv* env){
+    if(env == NULL){
+        Seal_LogError("Failed to attach JVM");
+        return SEAL_NO_TEXTURE;
+    }
+    // Read the texture file from the java and pass it back here
+    Seal_Log("Preloaders: %s", path.c_str());
+    jclass texturePipelineJClass = env->FindClass("com/roncho/greyseal/engine/android/SealTexturePipeline");
+    Seal_Log("Finding methods...");
+    jmethodID textureLoadMethod = env->GetStaticMethodID(texturePipelineJClass, "load", "(Ljava/lang/String;)I");
+    Seal_Log("Making jpath");
+    jstring jpath = env->NewStringUTF(path.c_str());
+    Seal_Log("Making some ids... %p->CallStaticIntMethod(%p,%p,%p)", env, texturePipelineJClass, textureLoadMethod, jpath);
+    int glId = env->CallStaticIntMethod(texturePipelineJClass, textureLoadMethod,
+                                                  jpath);
+    Seal_Log("Caching");
+    textures[path] = (Seal_Texture) glId;
+    return (Seal_Texture)glId;
+}
 
-    texturePipelineJClass = env->FindClass("com/roncho/greyseal/engine/android/SealTexturePipeline");
-    if(env->ExceptionCheck()) return JNI_FALSE;
-    textureLoadMethod = env->GetStaticMethodID(texturePipelineJClass, "load", "(Ljava/lang/String;)I");
+static void Seal_LoadTextureAsyncHandler(void* args){
+    // TODO: The thread's JNIEnv seems not to be synced with the main thread's JNIEnv
+    // TODO: Also, attach to thread doesn't fail, but seems like the class loader is not working
+    // TODO: properly
+    JVM& jvm = Seal_GetJVM();
+    // Lock the current thread to make disable race conditions, In addition since we will
+    // need to use JNI to register textures, we have to attach the thread.
+    jvmMutex.lock();
+    JNIEnv* env = jvm.attachToThread();
+    Seal_Texture texture = Seal_LoadTextureAndSync(((char*)args + sizeof(Seal_Texture *)), env);
+    Seal_Texture* out = *((Seal_Texture**)args);
+    // If we want to write this texture somewhere
+    if(out)
+        *out = texture;
+    // Now that we are done with this thread, we can detach the thread and unlock the mutex
+    jvm.detachFromThread();
+    jvmMutex.unlock();
+}
 
-    Seal_Log("Texture pipeline initialized successfully");
-    return env->ExceptionCheck();
+void Seal_LoadTextureAsync(const Seal_String& path, Seal_Texture* out){
+    // TODO: Look whats in Seal_LoadTextureAsyncHandler todo
+    if(textures.find(path) == textures.end()) {
+        // If we haven't loaded the texture yet, then start a thread to load it.
+        // Otherwise read it from the cache
+        char *args = (char *) malloc(path.size() + 1 + sizeof(Seal_Texture *));
+        *((Seal_Texture **) args) = out;
+        memcpy(args + sizeof(Seal_Texture *), path.c_str(), path.size());
+        args[path.size() + sizeof(Seal_Texture *)] = 0;
+        Seal_EnqueueTask(&Seal_LoadTextureAsyncHandler, args);
+    }else if(out)
+        *out = textures[path];
 }
 
 Seal_Texture Seal_LoadTexture(const Seal_String& path){
     if(textures.find(path) == textures.end()) {
-        // The the texture isn't loaded, load it
-        Seal_Log("Preloaders: %s", path.c_str());
-
-        texturePipelineJClass = Seal_JNIEnv()->FindClass("com/roncho/greyseal/engine/android/SealTexturePipeline");
-        Seal_Log("Finding methods...");
-        textureLoadMethod = Seal_JNIEnv()->GetStaticMethodID(texturePipelineJClass, "load", "(Ljava/lang/String;)I");
-        Seal_Log("Making jpath");
-        jstring jpath = Seal_JNIEnv()->NewStringUTF(path.c_str());
-        Seal_Log("Making some ids... %p->CallStaticIntMethod(%p,%p,%p)", Seal_JNIEnv(), texturePipelineJClass, textureLoadMethod, jpath);
-        int glId = Seal_JNIEnv()->CallStaticIntMethod(texturePipelineJClass, textureLoadMethod,
-                                                   jpath);
-        Seal_Log("Caching");
-        textures[path] = (Seal_Texture) glId;
-        return (Seal_Texture)glId;
+        return Seal_LoadTextureAndSync(path, Seal_JNIEnv());
     }
     return textures[path];
 }
 
-int Seal_LoadTextureFromJava(JNIEnv* env, jbyteArray a, jint width, jint height, void* imageArray){
+static void SealTexture_FlipWorkerHandler(void* _args){
+    // Flip worker handler function for flipping the X's on an image from Java
+    // Used to split the work when there is a lot of it.
+    uint32_t* in;
+    int w, h, si, ei;
+    // Read arguments from argument array
+    uint8_t * args = (uint8_t *)_args;
+    in = *((uint32_t**)args);
+    w = *(int*)(args + sizeof(uint32_t*));
+    h = *(int*)(args + sizeof(uint32_t*) + sizeof(int));
+    si = *(int*)(args + sizeof(uint32_t*) + 2 * sizeof(int));
+    ei = *(int*)(args + sizeof(uint32_t*) + 3 * sizeof(int));
+    // Do flipping
+    for(int i = si; i < ei; i++){
+        int ii = I_FX(i, w, h), temp = in[ii];
+        in[ii] = in[i];
+        in[i] = temp;
+    }
+}
+
+int Seal_LoadTextureFromJava(JNIEnv* env, jbyteArray a, jint width, jint height, void* imageArray, bool invert){
     union {
         int8_t* array0;
         uint32_t* array1;
-    } textureArray, buffer;
+    } buffer;
 
     // Transfer the array into a c++ array
     size_t arrayLength = env->GetArrayLength(a);
-    textureArray.array0 = env->GetByteArrayElements(a, JNI_FALSE);
+    buffer.array0 = env->GetByteArrayElements(a, JNI_FALSE);
 
     // First we need to reverse the the array
-    buffer.array0 = new int8_t[arrayLength];
-    size_t floatArrayLength = arrayLength / 4;
+    // We must invert the Y component of the image for the uvs to mapped correctly
+    // Here we decide if we need to split the work to multiple threads or keep it under one thread
+    int amount  = (width * height) >> 1;
+    int threadCount = 1;
+    if(amount > 500000) threadCount = 4;
+    int step = amount / threadCount;
 
-    // We must invert the X component of the image for the uvs to mapped correctly
-    for(int i = 0; i < floatArrayLength; i++)
-        buffer.array1[i] = textureArray.array1[I_FX(i, width, height)];
+    Seal_DebugClock timer;
+    timer.start();
+    // Check if we need to split the work to threads, to make it faster
+    switch (threadCount) {
+        case 1:
+            // No threads needed, the overhead of making a thread will hurt performance
+            for (int i = 0; i < amount; i++) {
+                int ii = I_FX(i, width, height), temp = buffer.array1[i];
+                buffer.array1[i] = buffer.array1[ii];
+                buffer.array1[ii] = temp;
+            }
+            break;
+        default:
+            // Initialize the requested threads
+            for(int i = 0, si = 0; i < threadCount; i++,si+=step){
+                int ei = i == threadCount - 1 ? amount : si + step;
+                // Initialize arguments for the threads
+                uint8_t* args = (uint8_t *)malloc(sizeof(uint32_t*) + 4 * sizeof(int));
+                *((uint32_t**)args) = buffer.array1;
+                *(int*)(args + sizeof(uint32_t*)) = width;
+                *(int*)(args + sizeof(uint32_t*) + sizeof(int)) = height;
+                *(int*)(args + sizeof(uint32_t*) + 2 * sizeof(int)) = si;
+                *(int*)(args + sizeof(uint32_t*) + 3 * sizeof(int)) = ei;
+                Seal_EnqueueTask(&SealTexture_FlipWorkerHandler, args);
+            }
+            // Wait for the threads to finish thier work
+            Seal_TasksWait();
+            break;
+    }
+
 
     // Now we can do the GL stuff
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -77,12 +158,14 @@ int Seal_LoadTextureFromJava(JNIEnv* env, jbyteArray a, jint width, jint height,
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
+    // If a return copy us requested give it
     if(imageArray){
         memcpy(imageArray, buffer.array0, arrayLength);
     }
 
-    // Free buffer
-    delete[] buffer.array0;
+    timer.stop();
+    Seal_Log("Loaded texture in %f seconds (With %d Threads)", timer.elapsedSeconds(), threadCount);
+
     return textureId;
 }
 

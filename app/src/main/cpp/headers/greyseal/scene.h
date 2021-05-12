@@ -65,6 +65,7 @@ private:
  */
 void Seal_Destroy(Seal_Entity** object);
 Seal_Entity* Seal_Find(Seal_Short entityId);
+Seal_Entity* Seal_Clone(Seal_Entity* other);
 /**
  * \brief Sets the camera transform, where transform vector is an array of length 7 that has the position and rotation
  * @param transformVector

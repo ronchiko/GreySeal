@@ -28,6 +28,16 @@ public final class EntityStream {
     public void write(Entity e){
         e.write(stream);
     }
-    public Entity at(int index) { return new Entity(stream, index * SIZEOF_OBJECT); }
+    public Entity at(int index) {
+        if(index >= count || index < 0) return null;
+        return new Entity(stream, index * SIZEOF_OBJECT);
+    }
+    public Entity getByUid(short uid){
+        for(int i = 0; i < count; i++){
+            Entity e = new Entity(stream, i * SIZEOF_OBJECT);
+            if(e.uid == uid) return e;
+        }
+        return null;
+    }
     private static native int getSizeofNativeObject();
 }

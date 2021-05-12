@@ -49,14 +49,16 @@ void Seal_Scene::cleanse(void){
     int newCount = count;
     int removeCount = 0;
     for(int i = count - 1; i >= 1; i--){
-        if(start[i]->engineFlags & SEAL_ENGINE_DESTROY){
+        if(start[i]->engineFlags & SEAL_ENGINE_DESTROYED){
             int batchStart = i;
-            while(i >= 1 && start[i]->engineFlags & SEAL_ENGINE_DESTROY){
+            while(i >= 1 && start[i]->engineFlags & SEAL_ENGINE_DESTROYED){
                 i--;
             }
             memmove(start + i + 1, start + batchStart + 1, (newCount - batchStart) * sizeof(Seal_ObjectUnion));
             newCount -= (batchStart - i);
             removeCount += (batchStart - i);
+        }else if(start[i]->engineFlags & SEAL_ENGINE_DESTROY){
+            start[i]->engineFlags = (start[i]->engineFlags & ~SEAL_ENGINE_DESTROY) | SEAL_ENGINE_DESTROYED;
         }
     }
 
@@ -97,7 +99,7 @@ void Seal_RenderObject(Seal_Entity* object, const Seal_Scene* scene, float* pare
         return;
     }
 
-    if(object->engineFlags & SEAL_ENGINE_DONT_DRAW){
+    if(object->engineFlags & (SEAL_ENGINE_DONT_DRAW | SEAL_ENGINE_DESTROYED)){
         return;
     }
 

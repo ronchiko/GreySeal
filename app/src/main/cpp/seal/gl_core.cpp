@@ -23,14 +23,13 @@ static uint16_t objectUid;
 
 Seal_Texture defaultTextureId;
 
-int Seal_GlStart(int width, int height){
+int Seal_GlStart(){
     Seal_Log("Preparing rnd");
     time_t t;
     srand((unsigned)time(&t));
 
     Seal_Log("Starting internal GL scene");
-    Seal_Specs::width = width; Seal_Specs::height = height;
-    glViewport(0, 0, width, height);
+
     scene = new Seal_Scene();
     scene->camera().transform.rotation = Seal_Quaternion::euler(351.f, 0, 0);
     Seal_Log("Loading textures...");
@@ -142,6 +141,19 @@ Seal_Entity* Seal_Find(Seal_Short id){
     for(int i = 1; i < scene->count; i++)
         if(scene->start[i].object.uid == id) return &scene->start[i].object;
     return nullptr;
+}
+
+Seal_Entity* Seal_Clone(Seal_Entity* e){
+    Seal_Entity* ptr;
+
+    Seal_Instantiate(&ptr);
+    uint16_t uid = ptr->uid;
+    Seal_EngineFlags flags = ptr->engineFlags;
+
+    memcpy(ptr, e, sizeof(Seal_Entity));
+    ptr->uid = uid; ptr->engineFlags = flags;
+
+    return ptr;
 }
 
 void Seal_GlEnd(){

@@ -11,6 +11,8 @@ import android.graphics.PorterDuffXfermode;
 import android.graphics.Typeface;
 import android.util.Log;
 
+import com.roncho.greyseal.engine.android.cpp.SealLinkedCache;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.logging.Logger;
@@ -61,7 +63,9 @@ public final class SealTexturePipeline {
             int width = e.getWidth(), height = e.getHeight();
             byte[] array = decodeBMP(e);
 
-            return registerBmp(array, width, height);
+            int glId = registerBmp(array, width, height);
+            SealLinkedCache.addTexture(path, glId);
+            return glId;
         }catch (IOException e){
             Log.e("Greyseal", "Failed to load texture " + path);
         }

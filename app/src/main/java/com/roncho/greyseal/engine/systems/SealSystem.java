@@ -1,13 +1,18 @@
 package com.roncho.greyseal.engine.systems;
 
+import com.roncho.greyseal.engine.Quaternion;
 import com.roncho.greyseal.engine.SealEngine;
 import com.roncho.greyseal.engine.SealLog;
 import com.roncho.greyseal.engine.Vector3;
 import com.roncho.greyseal.engine.systems.stream.Entity;
+import com.roncho.greyseal.engine.systems.stream.EntityStream;
+import com.roncho.greyseal.game.activity.EnemySystem;
 
 public abstract class SealSystem {
 
     private final static short NEW_FLAG = 0x1;
+
+    private EntityStream stream;
 
     /**
      * Must be implemented for the system to be able to select object to work with
@@ -51,6 +56,10 @@ public abstract class SealSystem {
         SealEngine.makePreset(path, position);
     }
 
+    public static void clone(Entity e, Vector3 pos){
+        SealEngine.cloneInstance(e, pos);
+    }
+
     public static void destroy(Entity e){
         SealEngine.destroy(e);
     }
@@ -59,5 +68,12 @@ public abstract class SealSystem {
     }
     public void callSignal(String name, Entity e, Object... params){
         SealSystemManager.invoke(name, e, params);
+    }
+
+    void setCurrentObjectStream(EntityStream stream) { this.stream = stream; }
+
+    public Entity getEntityByLocalIndex(int index){
+        if(stream == null) return null;
+        return stream.at(index);
     }
 }

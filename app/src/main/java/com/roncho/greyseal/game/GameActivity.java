@@ -4,6 +4,7 @@ import com.roncho.greyseal.engine.Quaternion;
 import com.roncho.greyseal.engine.SealEngine;
 import com.roncho.greyseal.engine.SealEngineActivity;
 import com.roncho.greyseal.engine.Vector3;
+import com.roncho.greyseal.engine.physics.CollisionSystem;
 import com.roncho.greyseal.engine.systems.SealSystemManager;
 import com.roncho.greyseal.game.activity.EnemySystem;
 import com.roncho.greyseal.game.activity.GameManagerSystem;
@@ -28,5 +29,7 @@ public class GameActivity extends SealEngineActivity {
         SealSystemManager.addSystem(new GameManagerSystem());
         SealSystemManager.addSystem(new PlayerSystem());
         SealSystemManager.addSystem(new EnemySystem());
+
+        CollisionSystem.enable();
     }
 }

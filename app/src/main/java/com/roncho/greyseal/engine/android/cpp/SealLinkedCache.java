@@ -1,9 +1,11 @@
 package com.roncho.greyseal.engine.android.cpp;
 
+import com.roncho.greyseal.engine.physics.AABB;
+
 import java.util.HashMap;
 
 public final class SealLinkedCache {
-    private static HashMap<String, Integer> textures, meshes, materials;
+    private final static HashMap<String, Integer> textures, meshes, materials;
 
     static {
         textures = new HashMap<>();
@@ -12,7 +14,9 @@ public final class SealLinkedCache {
     }
 
     // These are implemented and called from JNI
-    private native static void addTexture(String str, int integer);
+    public static void addTexture(String str, int integer){
+        textures.put(str, integer);
+    }
     private native static void addMesh(String str, int integer);
     private native static void addMaterial(String str, int integer);
 
@@ -34,4 +38,6 @@ public final class SealLinkedCache {
             return (int)meshes.get(name);
         return -1;
     }
+
+
 }

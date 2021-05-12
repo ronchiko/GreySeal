@@ -13,7 +13,8 @@ public class PlayerSystem extends SealSystem {
 
     public static final float minX = -2, maxX = 2;
 
-    private UI.UIObject testUi;
+    private static final float TIME_BETWEEN_SHOTS = 1;
+
     private float targetX = 0;
 
     private final float playerMoveSpeed = 10;
@@ -27,13 +28,6 @@ public class PlayerSystem extends SealSystem {
 
     @Override
     public void updateOnce() {
-
-        if(testUi == null) {
-            SealEngine.loadFont("fonts/ADDECRG.TTF");
-            testUi = UI.newUiObject();
-            testUi.setTransform(50, 50, 300, 300);
-            testUi.setText("Hello Motherfucker world!");
-        }
 
         touchingScreen = false;
         for(int i = 0; i < Input.touchCount(); i++ ){
@@ -53,8 +47,9 @@ public class PlayerSystem extends SealSystem {
     public void onUpdate(Entity entity) {
         entity.position.x = SealMath.moveTowards(entity.position.x, targetX, Time.deltaTime() * playerMoveSpeed, 0.4f);
 
-        if(touchingScreen){
-            // Then shoot
+        if(touchingScreen && shootTimer >= TIME_BETWEEN_SHOTS){
+            instantiate("presets/laser.ntt", entity.position);
+            shootTimer = 0;
         }
     }
 }

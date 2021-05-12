@@ -47,7 +47,7 @@ public final class SealSystemManager {
                 if(system.selectObject(entity)){
                     if(entity.check(SealEngineFlags.NEW)) system.onNewEntity(entity);
                     system.onUpdate(entity);
-                    if(entity.check(SealEngineFlags.DESTROY)) system.onEntityDestroyed(entity);
+                    if(entity.check(SealEngineFlags.DESTROYED)) system.onEntityDestroyed(entity);
                 }
             }
 

@@ -5,8 +5,9 @@
 #include "greyseal/preset.h"
 #include "greyseal/ui.h"
 #include "greyseal/font.h"
-
+#include "greyseal/threading.h"
 #include "jseal.h"
+
 
 #define INST(name) static int SealInst_##name(Seal_ByteStream& stream)
 
@@ -85,11 +86,8 @@ INST(LoadTexture){
     READ(stream.readString(&name), "Expected a string.");
 
     Seal_Log("Preloading texture '%s'", name);
-    Seal_Texture texture = Seal_LoadTexture(name);
-    Seal_Log("Preloaded texture '%s'", name);
-    jclass jcls = Seal_JNIEnv()->FindClass("com/roncho/greyseal/engine/android/cpp/SealLinkedCache");
-    jstring str = Seal_JNIEnv()->NewStringUTF(name);
-    Java_com_roncho_greyseal_engine_android_cpp_SealLinkedCache_addTexture(Seal_JNIEnv(), jcls, str, texture);
+    Seal_LoadTexture(name);
+
     return SEAL_SUCCESS;
 }
 INST(LoadMaterial){
@@ -146,7 +144,6 @@ INST(UIOPropI){
     Seal_SetUIOProp(index, propId, value);
     return SEAL_SUCCESS;
 }
-
 INST(UIOPropF){
     Seal_Int index, propId;
     Seal_Float value;
@@ -157,7 +154,6 @@ INST(UIOPropF){
     Seal_SetUIOProp(index, propId, value);
     return SEAL_SUCCESS;
 }
-
 INST(UIOPropS){
     Seal_Int index, propId;
     Seal_C_String value;
@@ -169,21 +165,51 @@ INST(UIOPropS){
     return SEAL_SUCCESS;
 }
 
-INST(UIOSetVMode){
-    Seal_Int index, vmode;
-    READ(stream.readInt(&index), "Expected an int");
-    READ(stream.readInt(&vmode), "Expected an int");
-
-    Seal_SetUIOVMode(index, vmode);
-    return SEAL_SUCCESS;
-}
-
 INST(DelUIO){
     Seal_Int index;
     READ(stream.readInt(&index), "Expected an int");
     Seal_DeleteUIO(index);
     return SEAL_SUCCESS;
 }
+
+INST(Clone1){
+    Seal_Short uid;
+    READ(stream.readShort(&uid), "Expected a short");
+
+    Seal_Clone(Seal_Find(uid));
+
+    return SEAL_SUCCESS;
+}
+INST(Clone2){
+    Seal_Short uid;
+    Seal_Vector3 ps, sc;
+    Seal_Quaternion qt;
+    READ(stream.readShort(&uid), "Expected a short");
+    READ(stream.readVector3(&ps), "Expected a vector 3");
+    READ(stream.readQuaternion(&qt), "Expected a quaternion");
+    READ(stream.readVector3(&sc), "Expected a vector 3");
+
+    Seal_Entity* e = Seal_Clone(Seal_Find(uid));
+    e->transform.position = ps;
+    e->transform.rotation = qt;
+    e->transform.scale = sc;
+
+    return SEAL_SUCCESS;
+}
+
+INST(Clone3){
+    Seal_Short uid;
+    Seal_Vector3 ps;
+    READ(stream.readShort(&uid), "Expected a short");
+    READ(stream.readVector3(&ps), "Expected a vector 3");
+
+    Seal_Entity* t = Seal_Find(uid);
+    Seal_Entity* e = Seal_Clone(t);
+    e->transform.position = ps;
+
+    return SEAL_SUCCESS;
+}
+
 
 static _Seal_Instruction instructions[] = {
        &SealInst_Nop,
@@ -195,14 +221,14 @@ static _Seal_Instruction instructions[] = {
        &SealInst_LoadMaterial,
        &SealInst_LoadMesh,
        &SealInst_For,
-       NULL,
-       NULL,
-       NULL,
+       &SealInst_Clone1,
+       &SealInst_Clone2,
+       &SealInst_Clone3,
        &SealInst_NewUIO,
        &SealInst_UIOPropI,
        &SealInst_UIOPropF,
        &SealInst_UIOPropS,
-       &SealInst_UIOSetVMode,
+       NULL,
        &SealInst_DelUIO,
        NULL
 };
@@ -238,4 +264,5 @@ void Seal_ExecuteEngineCalls(Seal_Byte* buffer, size_t length){
     while(stream.hasNext()){
         if(Seal_StreamDoCommand(stream) == SEAL_FAILURE_FATAL) return;
     }
+    Seal_TasksWait();
 }

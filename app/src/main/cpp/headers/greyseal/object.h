@@ -16,7 +16,8 @@ class Seal_Scene;
 typedef enum _Seal_EngineFlag_e : Seal_EngineFlags {
     SEAL_ENGINE_DESTROY = 0x1,
     SEAL_ENGINE_NEW = 0x2,
-    SEAL_ENGINE_DONT_DRAW = 0x4
+    SEAL_ENGINE_DONT_DRAW = 0x4,
+    SEAL_ENGINE_DESTROYED = 0x8
 } Seal_EngineFlag;
 
 struct Seal_Transform {

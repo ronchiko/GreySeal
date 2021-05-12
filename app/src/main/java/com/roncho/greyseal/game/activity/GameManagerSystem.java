@@ -1,8 +1,10 @@
 package com.roncho.greyseal.game.activity;
 
+import com.roncho.greyseal.engine.SealEngine;
 import com.roncho.greyseal.engine.SealLog;
 import com.roncho.greyseal.engine.SealMath;
 import com.roncho.greyseal.engine.Time;
+import com.roncho.greyseal.engine.UI;
 import com.roncho.greyseal.engine.Vector3;
 import com.roncho.greyseal.engine.systems.SealStaticSystem;
 
@@ -106,17 +108,36 @@ public class GameManagerSystem extends SealStaticSystem {
         _GameState(int uid) { this.uid = uid; }
     }
 
+    public static class UIDisplay {
+        private UI.UIObject scoreDisplay;
+        private UI.UIObject waveDisplay;
+        private UI.UIObject lifeDisplay;
+
+        public void update() {
+            if(scoreDisplay == null){
+                scoreDisplay = UI.newUiObject();
+                scoreDisplay.setTextColor(0, 0, 0, 255).setTextSize(48).
+                        setTextAlignment(UI.Alignment.Left, UI.Alignment.Left).setFont(SealEngine.loadFont("fonts/impact.ttf")).
+                        setPadding(5, 5, 5, 5).setTransform(0, 0, 500, 60)
+                        .setText("Score: ").makeTransparent();
+            }
+        }
+    }
+
     private static final float _summonZ = -50;
     private _GameState state;
     private WaveManagerSystem manager;
+    private UIDisplay ui;
 
     public GameManagerSystem(){
         state = _GameState.IDLE;
         instance = this;
+        ui = new UIDisplay();
     }
 
     @Override
     public void updateOnce() {
+        ui.update();
         switch (state){
             case PLAYING:
                 if(manager != null){

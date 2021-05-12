@@ -2,14 +2,18 @@ package com.roncho.greyseal.engine;
 
 import com.roncho.greyseal.engine.android.SealTexturePipeline;
 import com.roncho.greyseal.engine.android.cpp.SealCppHandler;
+import com.roncho.greyseal.engine.systems.SealStaticSystem;
 import com.roncho.greyseal.engine.systems.SealSystemManager;
 import com.roncho.greyseal.engine.systems.instructions.SealCallType;
 import com.roncho.greyseal.engine.systems.stream.SealEngineFlags;
 import com.roncho.greyseal.engine.systems.stream.Entity;
 
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 
 public class SealEngine {
+
+    private final static HashMap<String, Integer> m_LoadedFonts = new HashMap<>();
 
     public static void destroy(Entity e){
           e.activate(SealEngineFlags.DESTROY);
@@ -27,8 +31,13 @@ public class SealEngine {
         SealSystemManager.queue(SealCallType.LOAD_MESH, bb);
     }
 
-    public static void loadFont(String path){
-        SealTexturePipeline.loadFont(path, 24);
+    public static int loadFont(String path){
+        if(!m_LoadedFonts.containsKey(path)) {
+            int index = SealTexturePipeline.loadFont(path, 48);
+            m_LoadedFonts.put(path, index);
+            return index;
+        }
+        return m_LoadedFonts.get(path);
     }
 
     public static void loadMaterial(String vertex, String fragment){
@@ -58,5 +67,25 @@ public class SealEngine {
         qt.writeToBuffer(bb);
         scl.writeToBuffer(bb);
         SealSystemManager.queue(SealCallType.INSTANTIATE_1, bb);
+    }
+
+    public static void cloneInstance(Entity e, Vector3 pos){
+        ByteBuffer bb = SealCppHandler.allocateJava(2 + Vector3.SIZE_IN_BYTES);
+        bb.putShort(e.uid);
+        pos.writeToBuffer(bb);
+        SealSystemManager.queue(SealCallType.CLONE_3, bb);
+    }
+    public static void cloneInstance(Entity e){
+        ByteBuffer bb = SealCppHandler.allocateJava(2);
+        bb.putShort(e.uid);
+        SealSystemManager.queue(SealCallType.CLONE_1, bb);
+    }
+    public static void cloneInstance(Entity e, Vector3 pos, Quaternion rot, Vector3 scl){
+        ByteBuffer bb = SealCppHandler.allocateJava(2 + Quaternion.SIZE_IN_BYTE + 2 * Vector3.SIZE_IN_BYTES);
+        bb.putShort(e.uid);
+        pos.writeToBuffer(bb);
+        rot.writeToBuffer(bb);
+        scl.writeToBuffer(bb);
+        SealSystemManager.queue(SealCallType.CLONE_1, bb);
     }
 }
