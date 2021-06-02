@@ -1,0 +1,5 @@
+
+flags 0x8
+model path "models/ground.obj"
+material shader "vertex.glsl" "fragment.glsl"
+color rgb 121 209 145

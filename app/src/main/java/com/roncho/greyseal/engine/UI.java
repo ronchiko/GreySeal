@@ -69,8 +69,10 @@ public class UI {
         private float textSize = 48;
         private int material, textMaterial;
         private final Rect transform, padding;
+        private boolean hasBackground;
 
         private UIObject(){
+            hasBackground = true;
             this.index = m_Index++;
             transform = new Rect(0, 0, 100, 100);
             padding = new Rect(5, 5, 5, 5);
@@ -129,7 +131,16 @@ public class UI {
         public final int getFont() { return font; }
 
         public UIObject setColor(int r, int g, int b, int a){
+            hasBackground = a != 0;
             color = Color.fromRGBA(r, g, b, a);
+            SetUioPropI(index, UioProperties.I_Color, color);
+            return this;
+        }
+        public UIObject setAlpha(int a){
+            if(hasBackground)
+                color = (0xFFFFFF & color) | ((a & 0xFF) << 24);
+            textColor = (0xFFFFFF00 & textColor) | ((a & 0xFF));
+            SetUioPropI(index, UioProperties.I_TextColor, textColor);
             SetUioPropI(index, UioProperties.I_Color, color);
             return this;
         }
@@ -142,9 +153,10 @@ public class UI {
         public final int getTextColor() { return textColor; }
         /** Make the background of this UI transparent */
         public final UIObject makeTransparent() { return setColor(255, 255, 255, 0);}
-        public void setBackgroundImage(int texture) {
+        public UIObject setBackgroundImage(int texture) {
             this.texture = texture;
             SetUioPropI(index, UioProperties.I_Texture, texture);
+            return this;
         }
         public final int getBackgroundImage() { return texture;}
 
@@ -154,7 +166,7 @@ public class UI {
             return this;
         }
         public UIObject setTextYAlignment(Alignment alignment){
-            flags = flags & ~0xC | alignment.bits;
+            flags = flags & ~0xC | (alignment.bits << 2);
             SetUioPropI(index, UioProperties.I_Flags, flags);
             return this;
         }

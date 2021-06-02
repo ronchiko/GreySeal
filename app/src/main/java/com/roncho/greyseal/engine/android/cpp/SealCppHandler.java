@@ -58,4 +58,9 @@ public final class SealCppHandler {
     }
 
     private static native byte[] JNIGet1();
+
+    public static short readShort(byte[] array, int offset){
+        ByteBuffer bb = ByteBuffer.wrap(array, offset, 2).order(nativeByteOrder);
+        return bb.getShort();
+    }
 }

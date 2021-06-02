@@ -35,6 +35,7 @@ public:
     Seal_Scene() : count(1), start((Seal_ObjectUnion*)malloc(sizeof(Seal_ObjectUnion))) {
         Seal_Entity e = Seal_Entity();
         e.engineFlags = SEAL_ENGINE_DONT_DRAW;
+        e.uid = 0;
         start[0] = Seal_ObjectUnion(&e);
     }
     ~Seal_Scene() { free(start); }
@@ -47,7 +48,7 @@ public:
     void push(Seal_Entity* entities, int count);
     inline void push(Seal_Entity& entity) { push(&entity, 1); }
 
-    inline  Seal_Entity& camera() const { return start->object; }
+    inline Seal_Entity& camera() const { return start->object; }
 private:
     inline Seal_ObjectUnion* entities(void) const { return start + 1; }
     void viewMatrix(float*) const;          // create a projection matrix

@@ -11,6 +11,7 @@
 #include "greyseal/mesh.h"
 
 #include "sealog.h"
+#include "jseal.h"
 
 static std::unordered_map<int, Seal_Mesh*> meshes;
 static std::unordered_map<std::string, int> loadedMeshes;
@@ -128,6 +129,11 @@ int Seal_LoadMesh(const std::string& path){
         delete [] raw;
         Seal_Log("Loaded %d %d %d", vertecies.size() / 3, uvs.size() / 2, normals.size() / 3);
         Seal_Log("Successfully loaded mesh %s", path.c_str());
+
+        jclass jcls = Seal_JNIEnv()->FindClass("com/roncho/greyseal/engine/android/cpp/SealLinkedCache");
+        jstring str = Seal_JNIEnv()->NewStringUTF(path.c_str());
+        Java_com_roncho_greyseal_engine_android_cpp_SealLinkedCache_addMesh(Seal_JNIEnv(), jcls, str, index);
+
         return index;
     }
 

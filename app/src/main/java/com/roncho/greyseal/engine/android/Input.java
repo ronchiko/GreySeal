@@ -8,6 +8,7 @@ import androidx.annotation.NonNull;
 import com.roncho.greyseal.engine.SealLog;
 import com.roncho.greyseal.engine.Vector2;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 
 public final class Input {
@@ -74,35 +75,21 @@ public final class Input {
 
     private Touch[] touches;
     private int size, count;
+    private ArrayList<MotionEvent> m_QueuedMotionEvents;
 
     static Input instance;
+
 
     Input(){
         size = count = 0;
         touches = new Touch[0];
+        m_QueuedMotionEvents = new ArrayList<>();
     }
 
-    public void enqueue(MotionEvent e){
-        // Only works for touches, not for all the other wheels and stuff
-        for(int i = 0; i < e.getPointerCount(); i++){
-            Touch t = get(e.getPointerId(i));
-            switch (e.getActionMasked()){
-                case MotionEvent.ACTION_POINTER_DOWN: case MotionEvent.ACTION_DOWN:
-                    t.start(e.getX(i), e.getY(i));
-                    t.state = TouchState.DOWN;
-                    break;
-                case MotionEvent.ACTION_POINTER_UP:
-                case MotionEvent.ACTION_UP:
-                case MotionEvent.ACTION_CANCEL:
-                    t.state = TouchState.INVALID;
-                    break;
-                case MotionEvent.ACTION_MOVE:
-                    t.state = TouchState.MOVE;
-                    t.position(e.getX(i), e.getY(i));
-                    break;
-            }
-        }
+    void enqueue(MotionEvent e){
+        m_QueuedMotionEvents.add(e);
     }
+
     void remove(){
         for(int i = 0; i < count; i++){
             if(touches[i] != null && touches[i].state == TouchState.INVALID){
@@ -111,6 +98,32 @@ public final class Input {
                 return;
             }
         }
+    }
+
+    void updateOnce(){
+        for(MotionEvent e : m_QueuedMotionEvents) {
+            // Only works for touches, not for all the other wheels and stuff
+            for (int i = 0; i < e.getPointerCount(); i++) {
+                Touch t = get(e.getPointerId(i));
+                switch (e.getActionMasked()) {
+                    case MotionEvent.ACTION_POINTER_DOWN:
+                    case MotionEvent.ACTION_DOWN:
+                        t.start(e.getX(i), e.getY(i));
+                        t.state = TouchState.DOWN;
+                        break;
+                    case MotionEvent.ACTION_POINTER_UP:
+                    case MotionEvent.ACTION_UP:
+                    case MotionEvent.ACTION_CANCEL:
+                        t.state = TouchState.INVALID;
+                        break;
+                    case MotionEvent.ACTION_MOVE:
+                        t.state = TouchState.MOVE;
+                        t.position(e.getX(i), e.getY(i));
+                        break;
+                }
+            }
+        }
+        m_QueuedMotionEvents.clear();
     }
     private Touch get(int pid){
         for(int i = 0; i < count; i++){

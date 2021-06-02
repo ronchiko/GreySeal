@@ -18,8 +18,8 @@
 int Seal_Specs::width = 0;
 int Seal_Specs::height = 0;
 
-static Seal_Scene* scene;
-static uint16_t objectUid;
+static Seal_Scene* scene = nullptr;
+static uint16_t objectUid = 1;
 
 Seal_Texture defaultTextureId;
 
@@ -28,12 +28,14 @@ int Seal_GlStart(){
     time_t t;
     srand((unsigned)time(&t));
 
-    Seal_Log("Starting internal GL scene");
+    if(!scene) {
+        Seal_Log("Starting internal GL scene");
 
-    scene = new Seal_Scene();
-    scene->camera().transform.rotation = Seal_Quaternion::euler(351.f, 0, 0);
-    Seal_Log("Loading textures...");
-    defaultTextureId = Seal_LoadWhiteTexture();
+        scene = new Seal_Scene();
+        scene->camera().transform.rotation = Seal_Quaternion::euler(0.f, 0, 0);
+        Seal_Log("Loading textures...");
+        defaultTextureId = Seal_LoadWhiteTexture();
+    }
     // Initialize player
     return SEAL_SUCCESS;
 }
@@ -111,11 +113,11 @@ GLuint Seal_CompileProgram(const Seal_String& vertexPath, const Seal_String& fra
 }
 
 void Seal_Render(Seal_Byte* updatedBytes, Seal_Byte* calls, size_t callArrayLength){
-    // First we update the objects info
-    memcpy(scene->start, updatedBytes, scene->bytes());
-    Seal_ExecuteEngineCalls(calls, callArrayLength);
-
+    // Check if we a scene to render
     if(scene) {
+        // Copy the updates
+        memcpy(scene->start, updatedBytes, scene->bytes());
+        Seal_ExecuteEngineCalls(calls, callArrayLength); // Execute calls
         scene->cleanse();
         scene->render();
         Seal_DrawUI();
@@ -144,6 +146,9 @@ Seal_Entity* Seal_Find(Seal_Short id){
 }
 
 Seal_Entity* Seal_Clone(Seal_Entity* e){
+    if(e == nullptr)
+        return nullptr;
+
     Seal_Entity* ptr;
 
     Seal_Instantiate(&ptr);

@@ -1,5 +1,7 @@
 package com.roncho.greyseal.engine.android.cpp;
 
+import com.roncho.greyseal.engine.SealLog;
+import com.roncho.greyseal.engine.api.HasStringValue;
 import com.roncho.greyseal.engine.physics.AABB;
 
 import java.util.HashMap;
@@ -38,6 +40,9 @@ public final class SealLinkedCache {
             return (int)meshes.get(name);
         return -1;
     }
+    public static int getMesh(HasStringValue name) { return getMesh(name.getStringValue());}
 
-
+    static void includeMesh(String name, int index){
+        meshes.put(name, index);
+    }
 }

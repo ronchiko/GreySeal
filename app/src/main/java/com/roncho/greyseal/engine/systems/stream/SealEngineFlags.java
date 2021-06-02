@@ -1,6 +1,8 @@
 package com.roncho.greyseal.engine.systems.stream;
 
-public enum SealEngineFlags {
+import com.roncho.greyseal.engine.api.MaskEnum;
+
+public enum SealEngineFlags implements MaskEnum {
     DESTROY(0x1),
     NEW(0x2),
     DONT_DRAW(0x4),
@@ -9,4 +11,6 @@ public enum SealEngineFlags {
     final byte value, mask;
 
     SealEngineFlags(int value) { this.value = (byte)value; this.mask = (byte)~value; }
+
+    public int getMask() { return mask; }
 }

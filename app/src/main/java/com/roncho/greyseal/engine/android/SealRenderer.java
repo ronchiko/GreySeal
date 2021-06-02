@@ -2,6 +2,7 @@ package com.roncho.greyseal.engine.android;
 
 import android.opengl.GLSurfaceView;
 
+import com.roncho.greyseal.engine.SealLog;
 import com.roncho.greyseal.engine.Time;
 import com.roncho.greyseal.engine.systems.SealSystemManager;
 import com.roncho.greyseal.engine.systems.stream.EntityStream;
@@ -13,7 +14,7 @@ public final class SealRenderer implements GLSurfaceView.Renderer {
 
     private static boolean initiatedEngine = false;
 
-    private static native void init();
+    static native void init();
     private static native void step(byte[] updatedData, byte[] engineCommands);
     private static native void updateSpecs(int w, int h, byte[] cmds);
     private static native byte[] requestEngineData();
@@ -41,6 +42,7 @@ public final class SealRenderer implements GLSurfaceView.Renderer {
         Time.nextFrame();
         EntityStream stream = new EntityStream(requestEngineData());
 
+        Input.instance.updateOnce();
         SealSystemManager.runSystems(stream);
         byte[] instructions = SealSystemManager.getEngineCalls();
 

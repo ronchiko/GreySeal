@@ -1,6 +1,6 @@
 
 position v3 0 0 1
-rotation euler 0 270 0
+rotation euler 0 0 0
 scale v3 0.2 0.2 0.2
 
 flags 0x1

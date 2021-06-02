@@ -15,7 +15,9 @@ public:
             queue = realloc<Seal_Entity>(queue, (used + QUEUE_RESIZE) * sizeof(Seal_Entity));
             used += QUEUE_RESIZE;
         }
-        return (queue[count++] =  Seal_Entity());
+        Seal_Entity& ntt = queue[count++] = Seal_Entity();
+        ntt.engineFlags |= SEAL_ENGINE_NEW;
+        return ntt;
     }
 
     inline Seal_Entity* data(void) { return queue; }
@@ -35,7 +37,6 @@ Seal_Entity& Seal_QueueLateEntity(void){
 
 void Seal_LateInitialize(void){
     if(queue.size() > 0) {
-        Seal_Log("Adding %d objects", queue.size());
         Seal_Scene *scene = Seal_CurrentScene();
         scene->push(queue.data(), queue.size());
         queue.clear();

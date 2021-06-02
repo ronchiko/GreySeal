@@ -2,7 +2,8 @@ package com.roncho.greyseal.engine;
 
 import com.roncho.greyseal.engine.android.SealTexturePipeline;
 import com.roncho.greyseal.engine.android.cpp.SealCppHandler;
-import com.roncho.greyseal.engine.systems.SealStaticSystem;
+import com.roncho.greyseal.engine.api.HasStringValue;
+import com.roncho.greyseal.engine.systems.SealSystem;
 import com.roncho.greyseal.engine.systems.SealSystemManager;
 import com.roncho.greyseal.engine.systems.instructions.SealCallType;
 import com.roncho.greyseal.engine.systems.stream.SealEngineFlags;
@@ -16,7 +17,11 @@ public class SealEngine {
     private final static HashMap<String, Integer> m_LoadedFonts = new HashMap<>();
 
     public static void destroy(Entity e){
-          e.activate(SealEngineFlags.DESTROY);
+        // If the entity is not already destroyed, destroy it
+        if(!e.check(SealEngineFlags.DESTROYED) && !e.check(SealEngineFlags.DESTROY)) {
+            e.activate(SealEngineFlags.DESTROY);
+            SealSystem.modify(e);
+        }
     }
 
     public static void loadTexture(String path){
@@ -24,12 +29,14 @@ public class SealEngine {
         SealCppHandler.putString(bb, path);
         SealSystemManager.queue(SealCallType.LOAD_TEXTURE, bb);
     }
+    public static void loadTexture(HasStringValue path) { loadTexture(path.getStringValue());}
 
     public static void loadMesh(String path){
         ByteBuffer bb = SealCppHandler.allocateJava(path.length() + 1);
         SealCppHandler.putString(bb, path);
         SealSystemManager.queue(SealCallType.LOAD_MESH, bb);
     }
+    public static void loadMesh(HasStringValue path) { loadMesh(path.getStringValue());}
 
     public static int loadFont(String path){
         if(!m_LoadedFonts.containsKey(path)) {
@@ -39,6 +46,7 @@ public class SealEngine {
         }
         return m_LoadedFonts.get(path);
     }
+    public static int loadFont(HasStringValue path) { return loadFont(path.getStringValue()); }
 
     public static void loadMaterial(String vertex, String fragment){
         ByteBuffer bb = SealCppHandler.allocateJava(vertex.length() + 2 + fragment.length());
@@ -66,7 +74,7 @@ public class SealEngine {
         pos.writeToBuffer(bb);
         qt.writeToBuffer(bb);
         scl.writeToBuffer(bb);
-        SealSystemManager.queue(SealCallType.INSTANTIATE_1, bb);
+        SealSystemManager.queue(SealCallType.INSTANTIATE_0, bb);
     }
 
     public static void cloneInstance(Entity e, Vector3 pos){
@@ -86,6 +94,6 @@ public class SealEngine {
         pos.writeToBuffer(bb);
         rot.writeToBuffer(bb);
         scl.writeToBuffer(bb);
-        SealSystemManager.queue(SealCallType.CLONE_1, bb);
+        SealSystemManager.queue(SealCallType.CLONE_2, bb);
     }
 }

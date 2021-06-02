@@ -1,4 +1,6 @@
 
+# This is a template on how to use the preset system with seal
+
 position v3 0 0 1
 rotation qt 1 0 0 0
 scale v3 0.1 0.1 0.1
@@ -7,3 +9,4 @@ flags 0x0
 model path "models/cube-nuv.obj"
 texture path "textures/seal.jpg"
 material shader "vertex.glsl" "fragment.glsl"
+color rgb 0 255 0

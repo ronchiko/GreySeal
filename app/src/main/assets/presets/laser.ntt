@@ -3,6 +3,8 @@
 flags 0x4
 
 scale v3 0.1 0.1 0.1
+rotation euler 0 90 0
 
+material shader "vertex.glsl" "fragment.glsl"
 model path "models/laser.obj"
-color rgb 1 0 0
+color rgb 255 0 0

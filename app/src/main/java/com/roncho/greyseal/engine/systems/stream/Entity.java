@@ -3,6 +3,7 @@ package com.roncho.greyseal.engine.systems.stream;
 import com.roncho.greyseal.engine.Quaternion;
 import com.roncho.greyseal.engine.Vector3;
 import com.roncho.greyseal.engine.android.cpp.SealCppHandler;
+import com.roncho.greyseal.engine.api.MaskEnum;
 
 import java.nio.ByteBuffer;
 
@@ -10,37 +11,20 @@ public final class Entity {
 
     private static native int getObjectPayloadSize();
 
-    private static final int USER_FLAGS_SIZE = 4;
-    private static final int ENGINE_FLAGS_SIZE = 1, ENGINE_FLAGS_START = USER_FLAGS_SIZE;
-    private static final int VECTOR3_SIZE = 12, QUATERNION_SIZE = 16, HANDLE_SIZE = 4, COLOR_SIZE = 4;
-    private static final int POSITION_START = ENGINE_FLAGS_START + ENGINE_FLAGS_SIZE;
-    private static final int ROTATION_START = POSITION_START + VECTOR3_SIZE;
-    private static final int SCALE_START = ROTATION_START + QUATERNION_SIZE;
-    private static final int COLOR_START = SCALE_START + VECTOR3_SIZE;
-    private static final int MATERIAL_START = COLOR_START + COLOR_SIZE;
-    private static final int TEXTURE_START = MATERIAL_START + HANDLE_SIZE;
-    private static final int MESH_START = TEXTURE_START + HANDLE_SIZE;
-
-    // Not used
-    private static final int PAYLOAD_START = MESH_START + HANDLE_SIZE;
-    private static final int PAYLOAD_SIZE = getObjectPayloadSize();
-
-    private static final int BUFFER_SIZE = PAYLOAD_SIZE + PAYLOAD_START;
-
     private final int start;
     public int userFlags;
-    public short engineFlags, uid;
+    public short engineFlags;
+    public final short uid;
 
     public Vector3 position;
     public Quaternion rotation;
     public Vector3 scale;
     public int color, material, texture, mesh;
 
-    private final byte[] array;
+    final long m_GeneratedOnStreamId;
 
-    public Entity(byte[] array, int start){
+    Entity(byte[] array, int start){
         this.start = start;
-        this.array = array;
 
         ByteBuffer bb = SealCppHandler.allocateJava(array, start, EntityStream.SIZEOF_OBJECT);
 
@@ -56,9 +40,11 @@ public final class Entity {
         material = bb.getInt();
         texture = bb.getInt();
         mesh = bb.getInt();
+
+        m_GeneratedOnStreamId = EntityStream.g_CurrentStreamId;
     }
 
-    public void write(byte[] buffer){
+    void write(byte[] buffer){
         ByteBuffer bb = SealCppHandler.allocateJava(EntityStream.SIZEOF_OBJECT);
         bb.position(0);
 
@@ -74,15 +60,16 @@ public final class Entity {
         SealCppHandler.projectCpp(buffer, bb, start, EntityStream.SIZEOF_OBJECT);
     }
 
-    public short localIndex(){
-        return (short)(start / EntityStream.SIZEOF_OBJECT);
-    }
-
     public boolean check(SealEngineFlags flag) { return (engineFlags & flag.value) != 0; }
     public void activate(SealEngineFlags flag) { engineFlags |= flag.value; }
     public void deactivate(SealEngineFlags flag) { engineFlags &= flag.mask; }
 
-    public void apply(){
-        write(array);
-    }
+    public boolean matches(int mask) { return (userFlags & mask) != 0; }
+    public boolean matches(MaskEnum mask) { return (userFlags & mask.getMask()) != 0; }
+
+    /**
+     * Checks if an object is queued for destruction.
+     * @return
+     */
+    public boolean queued() { return check(SealEngineFlags.DESTROYED) || check(SealEngineFlags.DESTROY);}
 }

@@ -8,16 +8,21 @@ import com.roncho.greyseal.engine.physics.CollisionSystem;
 import com.roncho.greyseal.engine.systems.SealSystemManager;
 import com.roncho.greyseal.game.activity.EnemySystem;
 import com.roncho.greyseal.game.activity.GameManagerSystem;
+import com.roncho.greyseal.game.activity.ParallaxSystem;
 import com.roncho.greyseal.game.activity.PlayerSystem;
+import com.roncho.greyseal.game.activity.ProjectileSystem;
+import com.roncho.greyseal.game.activity.UISystem;
 
 public class GameActivity extends SealEngineActivity {
     @Override
     public void loadResources(InitialCameraState state) {
         SealEngine.loadMesh("models/spaceship.obj");
         SealEngine.loadMesh("models/ufo.obj");
+        SealEngine.loadMesh("models/laser.obj");
 
         SealEngine.loadTexture("textures/spaceship-uvl.png");
         SealEngine.loadTexture("textures/ufo-uvl.png");
+        SealEngine.loadTexture("textures/title.png");
 
         SealEngine.loadMaterial("vertex.glsl", "fragment.glsl");
 
@@ -29,6 +34,9 @@ public class GameActivity extends SealEngineActivity {
         SealSystemManager.addSystem(new GameManagerSystem());
         SealSystemManager.addSystem(new PlayerSystem());
         SealSystemManager.addSystem(new EnemySystem());
+        SealSystemManager.addSystem(new ProjectileSystem());
+        SealSystemManager.addSystem(new UISystem());
+        SealSystemManager.addSystem(new ParallaxSystem());
 
         CollisionSystem.enable();
     }

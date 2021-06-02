@@ -1,0 +1,6 @@
+
+flags 0x10
+
+model path "models/tree.obj"
+material shader "vertex.glsl" "fragment.glsl"
+texture path "textures/tree.png"

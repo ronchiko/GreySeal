@@ -29,18 +29,19 @@ public final class AABB {
     public AABB(AABB o){
         start = new Vector3(o.start);
         sizes = new Vector3(o.sizes);
-        end = new Vector3(o.end);
+        end = start.add(sizes);
     }
     public AABB(AABB o, Vector3 scale){
         start = new Vector3(o.start.scale(scale));
         sizes = new Vector3(o.sizes.scale(scale));
-        end = new Vector3(o.end);
+        end = start.add(sizes);
     }
 
     public boolean collides(AABB other, Vector3 position, Vector3 oPosition){
-        return  !(other.start.x + oPosition.x > end.x + position.x || other.end.x + oPosition.x < start.x + position.x) ||
-                !(other.start.y + oPosition.y > end.y + position.y || other.end.y + oPosition.y < start.y + position.y) ||
-                !(other.start.z + oPosition.z > end.z + position.z || other.end.z + oPosition.z < start.z + position.z);
+        float ex = end.x + position.x, sx = start.x + position.x, osx = other.start.x + oPosition.x, oex = other.end.x + oPosition.x;
+        float ey = end.y + position.y, sy = start.y + position.y, osy = other.start.y + oPosition.y, oey = other.end.y + oPosition.y;
+        float ez = end.z + position.z, sz = start.z + position.z, osz = other.start.z + oPosition.z, oez = other.end.z + oPosition.z;
+        return oex >= sx && ex >= osx && oey >= sy && ey >= osy && oez >= sz && ez >= osz;
     }
     public boolean contains(Vector3 point, Vector3 position){
         return  start.x + position.x <= point.x && point.x <= end.x + position.x &&
@@ -72,5 +73,12 @@ public final class AABB {
 
     private static void registerMeshAABB(int meshId, float x, float y, float z, float w, float h, float d){
         meshPrecompiledAABB.put(meshId, new AABB(new Vector3(x, y, z), new Vector3(w, h, d)));
+    }
+
+    public void rotate90Y(){
+        float tsx = start.x, twx = sizes.x;
+        start.x = start.z; sizes.x = sizes.z;
+        start.z = tsx; sizes.z = twx;
+        end = start.add(sizes);
     }
 }

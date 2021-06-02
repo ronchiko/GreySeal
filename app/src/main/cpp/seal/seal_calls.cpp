@@ -97,10 +97,7 @@ INST(LoadMaterial){
     READ(stream.readString(&fragment), "Expected a string.");
 
     Seal_MaterialHandle mtrl = Seal_LoadMaterial(vertex, fragment);
-    std::stringstream ss; ss << vertex << ";" << fragment << ";";
-    jclass jcls = Seal_JNIEnv()->FindClass("com/roncho/greyseal/engine/android/cpp/SealLinkedCache");
-    jstring str = Seal_JNIEnv()->NewStringUTF(ss.str().c_str());
-    Java_com_roncho_greyseal_engine_android_cpp_SealLinkedCache_addMaterial(Seal_JNIEnv(), jcls, str, mtrl);
+
     return SEAL_SUCCESS;
 }
 INST(LoadMesh){
@@ -109,9 +106,6 @@ INST(LoadMesh){
     READ(stream.readString(&path), "Expected a string.");
 
     int mesh = Seal_LoadMesh(path);
-    jclass jcls = Seal_JNIEnv()->FindClass("com/roncho/greyseal/engine/android/cpp/SealLinkedCache");
-    jstring str = Seal_JNIEnv()->NewStringUTF(path);
-    Java_com_roncho_greyseal_engine_android_cpp_SealLinkedCache_addMesh(Seal_JNIEnv(), jcls, str, mesh);
     return SEAL_SUCCESS;
 }
 
@@ -190,10 +184,11 @@ INST(Clone2){
     READ(stream.readVector3(&sc), "Expected a vector 3");
 
     Seal_Entity* e = Seal_Clone(Seal_Find(uid));
-    e->transform.position = ps;
-    e->transform.rotation = qt;
-    e->transform.scale = sc;
-
+    if(e) {
+        e->transform.position = ps;
+        e->transform.rotation = qt;
+        e->transform.scale = sc;
+    }
     return SEAL_SUCCESS;
 }
 
@@ -205,7 +200,8 @@ INST(Clone3){
 
     Seal_Entity* t = Seal_Find(uid);
     Seal_Entity* e = Seal_Clone(t);
-    e->transform.position = ps;
+    if(e)
+        e->transform.position = ps;
 
     return SEAL_SUCCESS;
 }

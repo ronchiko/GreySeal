@@ -1,22 +1,23 @@
 package com.roncho.greyseal.game.activity;
 
+import androidx.annotation.NonNull;
+
 import com.roncho.greyseal.engine.SealEngine;
-import com.roncho.greyseal.engine.SealLog;
 import com.roncho.greyseal.engine.SealMath;
 import com.roncho.greyseal.engine.Time;
 import com.roncho.greyseal.engine.UI;
 import com.roncho.greyseal.engine.Vector3;
 import com.roncho.greyseal.engine.systems.SealStaticSystem;
+import com.roncho.greyseal.engine.systems.stream.Entity;
+import com.roncho.greyseal.game.GameAssets;
 
 public class GameManagerSystem extends SealStaticSystem {
 
-    private static final float m_Range = 4;
     private static GameManagerSystem instance;
 
     private final static class WaveManagerSystem {
 
-        private static final int m_FinalRound = 10; // After this round shit about be tough
-        private static final float m_HalfRange = m_Range * 0.5f;
+        private static final float m_Horizon = -120;
 
         private WaveManagerSystem(){
             m_CurrentWave = 0;
@@ -40,13 +41,17 @@ public class GameManagerSystem extends SealStaticSystem {
             private final Attacker[] m_Attacker;
 
             public AttackFormation(int round){
-                int attackers = SealMath.clamp(round / (m_FinalRound), 1, 5);       // Select the amount of attackers
+                final float _min = -1.5f;
+                final float _max = 1.5f;
 
-                float l_AttackersRelative = (attackers / 5f);
+                int attackers = SealMath.clamp(round , 1, 3);       // Select the amount of attackers
+
                 m_Attacker = new Attacker[attackers];
-                float l_Freedom =  - (l_AttackersRelative * l_AttackersRelative + 1) * m_HalfRange;
+                float step = (_max - _min) / attackers;
+
                 for(int i = 0; i < attackers; i++){
-                    float l_Position = (PlayerSystem.maxX * i +  PlayerSystem.minX * (5 - i)) / 5f + SealMath.random(-l_Freedom, l_Freedom);
+                    float l_Position = SealMath.clamp(_min + step * i + SealMath.random(-step * 0.5f, step * 0.5f),
+                            _min, _max);
                     m_Attacker[i] = new Attacker(0,  l_Position);
                 }
             }
@@ -54,7 +59,7 @@ public class GameManagerSystem extends SealStaticSystem {
             public void spawn(){
                 for (Attacker attacker :
                         m_Attacker) {
-                    instantiate("presets/ufo.ntt", new Vector3(attacker.m_Offset, -3, m_ZSummon));
+                    create(GameAssets.UFO_ENTITY, new Vector3(attacker.m_Offset, -3, m_Horizon));
                 }
             }
         }
@@ -88,6 +93,10 @@ public class GameManagerSystem extends SealStaticSystem {
             if(timer >= 5 && m_Wave != null){
                 if(m_Wave.hasNext()){
                     m_Wave.next().spawn();
+                }else{
+                    m_CurrentWave++;
+                    UISystem.incrementWave();
+                    m_Wave = new Wave(m_CurrentWave);
                 }
                 timer = 0;
             }
@@ -108,36 +117,16 @@ public class GameManagerSystem extends SealStaticSystem {
         _GameState(int uid) { this.uid = uid; }
     }
 
-    public static class UIDisplay {
-        private UI.UIObject scoreDisplay;
-        private UI.UIObject waveDisplay;
-        private UI.UIObject lifeDisplay;
-
-        public void update() {
-            if(scoreDisplay == null){
-                scoreDisplay = UI.newUiObject();
-                scoreDisplay.setTextColor(0, 0, 0, 255).setTextSize(48).
-                        setTextAlignment(UI.Alignment.Left, UI.Alignment.Left).setFont(SealEngine.loadFont("fonts/impact.ttf")).
-                        setPadding(5, 5, 5, 5).setTransform(0, 0, 500, 60)
-                        .setText("Score: ").makeTransparent();
-            }
-        }
-    }
-
-    private static final float _summonZ = -50;
     private _GameState state;
     private WaveManagerSystem manager;
-    private UIDisplay ui;
 
     public GameManagerSystem(){
         state = _GameState.IDLE;
         instance = this;
-        ui = new UIDisplay();
     }
 
     @Override
     public void updateOnce() {
-        ui.update();
         switch (state){
             case PLAYING:
                 if(manager != null){
@@ -153,7 +142,25 @@ public class GameManagerSystem extends SealStaticSystem {
     public static boolean inGame() { return instance.state == _GameState.PLAYING; }
 
     public static void startGame(){
-        if(instance.state != _GameState.PLAYING)
+        if(instance.state != _GameState.PLAYING) {
             instance.state = _GameState.PLAYING;
+            instance.manager = new WaveManagerSystem();
+            UISystem.closeMenu();
+        }
+    }
+    public static void addScore(int amount){
+        if(instance != null && instance.state == _GameState.PLAYING) {
+            UISystem.addScore(amount);
+        }
+    }
+
+    public static void endGame(){
+        if(instance != null){
+            instance.state = _GameState.END;
+            UISystem.resetScore();
+            instance.manager = null;
+            @NonNull Entity[] enemies = searchForAll((Entity e) -> e.matches(GameFlags.ENEMY));
+            for(Entity enemy : enemies) destroy(enemy);
+        }
     }
 }

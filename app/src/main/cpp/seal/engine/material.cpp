@@ -7,6 +7,7 @@
 #include "greyseal/gl.h"
 
 #include "sealog.h"
+#include "jseal.h"
 
 static std::unordered_map<Seal_String, Seal_MaterialHandle> loaded;
 static std::unordered_map<Seal_MaterialHandle, Seal_Material*> materials;
@@ -53,6 +54,12 @@ Seal_MaterialHandle Seal_LoadMaterial(const Seal_String& vertex, const Seal_Stri
         Seal_MaterialHandle id = materialIndex++;
         materials[id] = material;
         loaded[pid] = id;
+
+        std::stringstream ss; ss << vertex << ";" << frag << ";";
+        jclass jcls = Seal_JNIEnv()->FindClass("com/roncho/greyseal/engine/android/cpp/SealLinkedCache");
+        jstring str = Seal_JNIEnv()->NewStringUTF(ss.str().c_str());
+        Java_com_roncho_greyseal_engine_android_cpp_SealLinkedCache_addMaterial(Seal_JNIEnv(), jcls, str, id);
+
         return id;
     }
     return -1;

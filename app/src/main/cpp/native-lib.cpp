@@ -46,16 +46,18 @@ extern "C" {
 
     JNI_FNC(void) Java_com_roncho_greyseal_engine_android_SealRenderer_init(JNIEnv* env, jclass){
         Seal_Log("Starting open GL");
-        if(!__SEAL_INITIALIZED) {
-            Seal_NewThreadJNIEnv(env);
-            Seal_SetupNttEnvironment();
-            Seal_GlStart();
-            __SEAL_INITIALIZED = true;
-        }
+        //if(!__SEAL_INITIALIZED) {
+        Seal_NewThreadJNIEnv(env);
+        Seal_SetupNttEnvironment();
+        __SEAL_INITIALIZED = true;
+        //}
         Seal_Log("Open GL started successfully");
     }
     JNI_FNC(void) Java_com_roncho_greyseal_engine_android_SealRenderer_updateSpecs(JNIEnv* env, jclass, jint w, jint h, jbyteArray instr){
-        Seal_Log("Redo WH");
+        Seal_Log("Updating specs %d %d", w,h);
+
+        Seal_GlStart();
+
         Seal_Specs::width = w;
         Seal_Specs::height = h;
         Seal_Byte *sealCommands = (Seal_Byte *) env->GetByteArrayElements(instr, JNI_FALSE);
@@ -97,18 +99,10 @@ extern "C" {
     }
 
     JNI_FNC(void) Java_com_roncho_greyseal_engine_android_cpp_SealLinkedCache_addMesh(JNIEnv* env, jclass cls, jstring str, jint index){
-        // Get the hash map property for the mesh cache
-        jfieldID fid = env->GetStaticFieldID(cls, "meshes", "Ljava/util/HashMap;");
-        jobject hashMap = env->GetStaticObjectField(cls, fid);
-        jclass cls_hashMap = env->GetObjectClass(hashMap);
-        jmethodID mid = env->GetMethodID(cls_hashMap, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
 
-        // Make an integer instance to pass to the cache
-        jclass cls_Int = env->FindClass("java/lang/Integer");
-        jmethodID mid_IntInit = env->GetMethodID(cls_Int, "<init>", "(I)V");
-        jobject o_index = env->NewObject(cls_Int, mid_IntInit, index);
-        // Insert to the cache
-        env->CallObjectMethod(hashMap, mid, str, o_index);
+        jclass cacheClass = env->FindClass("com/roncho/greyseal/engine/android/cpp/SealLinkedCache");
+        jmethodID include = env->GetStaticMethodID(cacheClass, "includeMesh", "(Ljava/lang/String;I)V");
+        env->CallStaticVoidMethod(cacheClass, include, str, index);
 
         Seal_Mesh* mesh = Seal_GetMesh(index);
         if(mesh && mesh->size() > 0){
@@ -147,5 +141,17 @@ extern "C" {
         jobject o_index = env->NewObject(cls_Int, mid_IntInit, index);
 
         env->CallObjectMethod(hashMap, mid, str, o_index);
+    }
+
+    JNI_FNC(jbyteArray) Java_Link(android_SealSurfaceView_makeSnapshot)(JNIEnv* env, jclass){
+
+        Seal_Scene* scene = Seal_CurrentScene();
+        size_t size = scene->bytes() + sizeof(Seal_Scene);
+
+        jbyteArray array = env->NewByteArray(size);
+        env->SetByteArrayRegion(array, 0, sizeof(Seal_Scene), (jbyte*)scene);
+        env->SetByteArrayRegion(array, sizeof(Seal_Scene), scene->bytes(), (jbyte*)scene->bytesArray());
+
+        return array;
     }
 }

@@ -1,0 +1,7 @@
+
+flags 0x10
+
+model path "models/rock1.obj"
+material shader "vertex.glsl" "fragment.glsl"
+
+color rgb 169 176 194
